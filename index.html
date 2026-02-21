@@ -1342,8 +1342,7 @@ body {
   align-items: center;
   gap: 16px;
   font-size: var(--text-sm);
-  font-weight: 600;
-  color: var(--text-primary);
+  color: var(--text-secondary);
 }
 .list-spec-item {
   display: inline-flex;
@@ -1352,10 +1351,8 @@ body {
   white-space: nowrap;
 }
 .list-spec-area {
-  color: var(--text-secondary);
 }
 .list-spec-rent {
-  color: #000;
   font-weight: 700;
 }
 .list-info-date { font-size: var(--text-xs); color: var(--text-tertiary); }
@@ -4418,8 +4415,8 @@ function buildCard(prop, cls) {
         '<div class="card-info-name">' + prop.name + '</div>' +
         '<span class="card-badge-viewing">内見リク</span>' +
       '</div>' +
-      '<div class="card-info-line2">🚉 ' + prop.station + '  徒歩' + prop.walk + '</div>' +
-      '<div class="card-info-line3">' + prop.floor + '  ' + prop.area + '  💰 ' + prop.rent + '  ' + prop.condition + '</div>' +
+      '<div class="card-info-line2">🚉 ' + prop.station + '  徒歩' + prop.walk + '  ' + prop.condition + '</div>' +
+      '<div class="card-info-line3">' + prop.floor + '  ' + prop.area + '  ' + prop.rent + '</div>' +
     '</div>' +
     '';
 
