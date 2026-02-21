@@ -1,0 +1,5510 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>OpenStore - スワイプで物件探し</title>
+<style>
+/* ================================================================
+   DESIGN SYSTEM
+   ================================================================ */
+:root {
+  --bg: #F7F8FA;
+  --bg-white: #FFFFFF;
+  --bg-hover: #F0F2F5;
+  --bg-skeleton: #E8EAED;
+  --text-primary: #1A1D23;
+  --text-secondary: #6B7280;
+  --text-tertiary: #9CA3AF;
+  --accent: #06C755;
+  --accent-light: #E8F8EE;
+  --accent-dark: #05A847;
+  --blue: #3B82F6;
+  --blue-light: #EFF6FF;
+  --red: #EF4444;
+  --red-light: #FEF2F2;
+  --amber: #F59E0B;
+  --amber-light: #FFFBEB;
+  --primary: #1A1D23;
+  --border: #E5E7EB;
+  --border-light: #F3F4F6;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 2px 8px rgba(0,0,0,0.06);
+  --shadow-lg: 0 4px 16px rgba(0,0,0,0.08);
+  --font: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", sans-serif;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-full: 9999px;
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 12px;
+  --space-lg: 16px;
+  --space-xl: 20px;
+  --text-xs: 11px;
+  --text-sm: 13px;
+  --text-base: 15px;
+  --text-lg: 17px;
+  --text-xl: 20px;
+  --header-height: 52px;
+  --bottom-nav-height: 56px;
+}
+
+/* ================================================================
+   RESET & BASE
+   ================================================================ */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+body {
+  font-family: var(--font);
+  background: #1A1D23;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 100vh;
+  min-height: 100dvh;
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+#app {
+  width: 100%;
+  max-width: 430px;
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: var(--bg);
+  position: relative;
+  overflow: hidden;
+}
+
+/* ================================================================
+   PAGE SYSTEM
+   ================================================================ */
+.page {
+  display: none;
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  flex-direction: column;
+}
+.page.active { display: flex; }
+
+/* ================================================================
+   HEADER
+   ================================================================ */
+.header {
+  height: var(--header-height);
+  min-height: var(--header-height);
+  display: flex;
+  align-items: center;
+  padding: 0 var(--space-lg);
+  background: var(--bg-white);
+  border-bottom: 1px solid var(--border-light);
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+.header-title {
+  font-size: var(--text-lg);
+  font-weight: 700;
+  flex: 1;
+  text-align: center;
+}
+.header-back {
+  width: 36px; height: 36px;
+  display: flex; align-items: center; justify-content: center;
+  border: none; background: none; cursor: pointer;
+  color: var(--text-primary);
+  border-radius: var(--radius-full);
+  position: absolute;
+  left: var(--space-lg);
+  z-index: 2;
+}
+.header-back:active { background: var(--bg-hover); }
+
+/* ================================================================
+   BOTTOM NAV
+   ================================================================ */
+#bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 430px;
+  height: var(--bottom-nav-height);
+  background: var(--bg-white);
+  border-top: 1px solid var(--border-light);
+  display: none;
+  align-items: center;
+  justify-content: space-around;
+  z-index: 100;
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+#bottom-nav.visible { display: flex; }
+
+.nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  cursor: pointer;
+  border: none;
+  background: none;
+  padding: 6px 14px;
+  color: var(--text-tertiary);
+  font-size: var(--text-xs);
+  font-family: var(--font);
+  transition: color 0.15s;
+}
+.nav-item.active { color: #1a1a1a; }
+.nav-item svg { width: 22px; height: 22px; }
+
+/* ================================================================
+   BUTTONS
+   ================================================================ */
+.btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  padding: 14px 24px;
+  border-radius: var(--radius-md);
+  font-size: var(--text-base);
+  font-weight: 600;
+  font-family: var(--font);
+  cursor: pointer;
+  border: none;
+  transition: opacity 0.15s, transform 0.1s;
+  width: 100%;
+}
+.btn:active { transform: scale(0.98); opacity: 0.85; }
+.btn-primary { background: #1a1a1a; color: #fff; }
+.btn-primary:hover { background: #333; }
+.btn-outline { background: transparent; color: #1a1a1a; border: 1.5px solid #1a1a1a; }
+.btn-ghost { background: transparent; color: var(--text-secondary); border: none; }
+.btn-ghost:hover { color: var(--text-primary); }
+.btn-danger-outline { background: transparent; color: var(--red); border: 1.5px solid var(--border); }
+.btn-line { background: #06C755; color: #fff; font-size: var(--text-lg); padding: 16px; border-radius: var(--radius-md); }
+
+/* ================================================================
+   FORM ELEMENTS
+   ================================================================ */
+.form-group { margin-bottom: var(--space-xl); }
+.form-label {
+  display: block;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: var(--space-sm);
+}
+.form-input, .form-select, .form-textarea {
+  width: 100%;
+  padding: 12px var(--space-lg);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-md);
+  font-size: var(--text-base);
+  font-family: var(--font);
+  background: var(--bg-white);
+  color: var(--text-primary);
+  transition: border-color 0.2s;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.form-input:focus, .form-select:focus, .form-textarea:focus {
+  outline: none;
+  border-color: #1a1a1a;
+  box-shadow: 0 0 0 3px rgba(26,26,26,0.08);
+}
+.form-input::placeholder, .form-textarea::placeholder { color: var(--text-tertiary); }
+.form-textarea { resize: vertical; min-height: 80px; }
+.form-select {
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%236B7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  padding-right: 38px;
+}
+.form-row { display: flex; gap: var(--space-md); align-items: center; }
+.form-row .form-group { flex: 1; margin-bottom: 0; }
+
+.checkbox-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-sm);
+}
+.checkbox-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: 10px var(--space-md);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: var(--text-sm);
+  transition: all 0.15s;
+  user-select: none;
+}
+.checkbox-item.checked {
+  border-color: #1a1a1a;
+  background: #f5f5f5;
+  color: #1a1a1a;
+  font-weight: 600;
+}
+.check-icon {
+  width: 18px; height: 18px;
+  border: 1.5px solid var(--border);
+  border-radius: 4px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+.checkbox-item.checked .check-icon {
+  background: #1a1a1a;
+  border-color: #1a1a1a;
+}
+
+/* ================================================================
+   BADGES
+   ================================================================ */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.badge-new { background: var(--red); color: #fff; }
+.badge-blue { background: var(--blue-light); color: var(--blue); }
+.badge-green { background: var(--accent-light); color: var(--accent-dark); }
+.badge-gray { background: var(--bg-hover); color: var(--text-secondary); }
+.badge-amber { background: #FEF3C7; color: #92400E; }
+
+/* ================================================================
+   PAGE: WELCOME
+   ================================================================ */
+.welcome-bg {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(160deg, #ffffff 0%, #f5f5f5 50%, #ffffff 100%);
+  padding: 40px var(--space-xl);
+  text-align: center;
+  color: #000;
+  position: relative;
+  overflow: hidden;
+}
+.welcome-bg::before {
+  content: '';
+  position: absolute;
+  top: -60%; right: -40%;
+  width: 120%; height: 120%;
+  background: radial-gradient(circle, rgba(0,0,0,0.02) 0%, transparent 70%);
+  pointer-events: none;
+}
+.welcome-logo {
+  font-size: 38px;
+  font-weight: 800;
+  letter-spacing: -1px;
+  margin-bottom: var(--space-md);
+  position: relative;
+  color: #000;
+}
+.welcome-tagline {
+  font-size: var(--text-lg);
+  opacity: 0.7;
+  line-height: 1.7;
+  margin-bottom: 52px;
+  position: relative;
+  color: #000;
+}
+.welcome-btn-area { width: 100%; max-width: 320px; position: relative; }
+.welcome-btn-area .btn-line {
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  background: #000;
+  color: #fff;
+  border: none;
+}
+.welcome-sub {
+  font-size: var(--text-xs);
+  opacity: 0.5;
+  margin-top: var(--space-lg);
+  position: relative;
+  color: #000;
+}
+
+/* ================================================================
+   PAGE: REGISTER / CRITERIA SETUP - form body
+   ================================================================ */
+.form-page-body {
+  flex: 1;
+  padding: var(--space-xl);
+  padding-bottom: 40px;
+  overflow-y: auto;
+}
+
+/* ================================================================
+   PAGE: ONBOARDING GUIDE
+   ================================================================ */
+.guide-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 0 var(--space-xl);
+  overflow-y: auto;
+}
+.guide-hero {
+  text-align: center;
+  padding: 32px 0 24px;
+}
+.guide-hero-title {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+  letter-spacing: -0.3px;
+}
+.guide-hero-sub {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+.guide-steps {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  flex: 1;
+}
+.guide-step {
+  display: flex;
+  gap: var(--space-lg);
+  padding: var(--space-lg);
+  background: var(--bg-white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  position: relative;
+}
+.guide-step-num {
+  width: 36px;
+  height: 36px;
+  background: #1a1a1a;
+  color: #fff;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--text-base);
+  font-weight: 800;
+  flex-shrink: 0;
+}
+.guide-step-content {
+  flex: 1;
+  min-width: 0;
+}
+.guide-step-title {
+  font-size: var(--text-base);
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+.guide-step-desc {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+.guide-step-icon {
+  font-size: 28px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+.guide-cta {
+  padding: var(--space-xl) 0 40px;
+}
+
+/* ================================================================
+   PAGE: TUTORIAL
+   ================================================================ */
+.tutorial-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-xl);
+  gap: 20px;
+}
+.tutorial-card-wrap {
+  position: relative;
+  width: 220px;
+  height: 300px;
+}
+.tutorial-card {
+  width: 100%;
+  height: 100%;
+  background: var(--bg-white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+}
+.tutorial-card-img {
+  height: 55%;
+  background: linear-gradient(135deg, #e2e8f0, #cbd5e1);
+  display: flex; align-items: center; justify-content: center;
+}
+.tutorial-card-body { padding: var(--space-md); }
+.tutorial-card-body h4 { font-size: var(--text-sm); margin-bottom: 6px; line-height: 1.4; }
+.tutorial-card-body p { font-size: var(--text-xs); color: var(--text-secondary); line-height: 1.5; }
+
+.tutorial-hand {
+  position: absolute;
+  bottom: 40px;
+  left: 50%;
+  font-size: 42px;
+  animation: swipeHand 3s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 5;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.15));
+}
+@keyframes swipeHand {
+  0%, 100% { transform: translateX(-50%) translateX(0); opacity: 1; }
+  25% { transform: translateX(-50%) translateX(70px); opacity: 1; }
+  40% { transform: translateX(-50%) translateX(0); opacity: 0.7; }
+  65% { transform: translateX(-50%) translateX(-70px); opacity: 1; }
+  80% { transform: translateX(-50%) translateX(0); opacity: 0.7; }
+}
+
+.tutorial-labels {
+  display: flex;
+  justify-content: space-between;
+  width: 260px;
+}
+.tutorial-label-yes { font-size: var(--text-base); font-weight: 700; color: #1a1a1a; }
+.tutorial-label-no { font-size: var(--text-base); font-weight: 700; color: var(--text-secondary); }
+
+.tutorial-desc {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  text-align: center;
+  line-height: 1.7;
+}
+
+/* ================================================================
+   PAGE: SWIPE - the hero feature
+   ================================================================ */
+.swipe-header {
+  height: 44px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  padding: 0 var(--space-lg);
+  background: var(--bg-white);
+  flex-shrink: 0;
+}
+.swipe-header-title { font-size: var(--text-sm); font-weight: 600; flex: 1; color: var(--text-primary); }
+.swipe-progress-text { font-size: var(--text-xs); color: var(--text-tertiary); font-weight: 500; }
+
+.swipe-progress-bar {
+  height: 2px;
+  background: var(--border-light);
+  flex-shrink: 0;
+}
+.swipe-progress-fill {
+  height: 100%;
+  background: #1a1a1a;
+  transition: width 0.4s ease;
+  border-radius: 0 2px 2px 0;
+}
+
+.swipe-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 25px 8px 0;
+  padding-bottom: 94px;
+  position: relative;
+}
+
+.card-stack {
+  position: relative;
+  width: 100%;
+  max-width: 414px;
+  height: calc(100dvh - 46px - 94px - 12px);
+  max-height: 700px;
+}
+
+/* Swipe card */
+.swipe-card {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 100%;
+  background: var(--bg-white);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.1);
+  overflow: hidden;
+  will-change: transform;
+  cursor: grab;
+  user-select: none;
+  touch-action: pan-y;
+}
+.swipe-card.dragging { cursor: grabbing; }
+.swipe-card.card-bg-1 {
+  transform: scale(0.975) translateY(4px);
+  z-index: 1;
+  pointer-events: none;
+}
+.swipe-card.card-bg-2 {
+  transform: scale(0.95) translateY(8px);
+  z-index: 0;
+  pointer-events: none;
+}
+.swipe-card.card-main {
+  z-index: 2;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.12), 0 1px 4px rgba(0,0,0,0.06);
+}
+
+/* Card = full-bleed image (Tinder style) */
+.card-image-area {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 50%, #94a3b8 100%);
+  overflow: hidden;
+  cursor: pointer;
+}
+.card-image-area img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+}
+.card-badge-new,
+.card-badge-deadline {
+  position: absolute;
+  top: var(--space-md);
+  left: var(--space-md);
+  z-index: 3;
+}
+/* Deadline badge variants */
+.card-badge-deadline {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  letter-spacing: 0.3px;
+}
+.card-badge-urgent {
+  background: rgba(239, 68, 68, 0.95);
+  color: #fff;
+  animation: urgentPulse 1.5s ease-in-out infinite;
+}
+.card-badge-day1 {
+  background: rgba(251, 191, 36, 0.95);
+  color: #fff;
+}
+.card-badge-warning {
+  background: rgba(245, 158, 11, 0.95);
+  color: #fff;
+}
+.card-badge-fresh {
+  background: rgba(6, 199, 85, 0.9);
+  color: #fff;
+}
+@keyframes urgentPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+  50% { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
+}
+/* Photo dots */
+.card-photo-dots {
+  position: absolute;
+  top: var(--space-sm);
+  left: var(--space-lg);
+  right: var(--space-lg);
+  display: flex;
+  gap: 3px;
+  z-index: 3;
+}
+.card-photo-dot {
+  flex: 1;
+  height: 3.5px;
+  border-radius: 2px;
+  background: rgba(255,255,255,0.35);
+  transition: background 0.2s;
+}
+.card-photo-dot.active {
+  background: #fff;
+  box-shadow: 0 0 4px rgba(255,255,255,0.5);
+}
+
+/* Stamp overlays */
+.stamp {
+  position: absolute;
+  top: 40%;
+  font-size: 30px;
+  font-weight: 900;
+  padding: 8px 18px;
+  border: 4px solid;
+  border-radius: var(--radius-sm);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 4;
+  letter-spacing: 2px;
+}
+.stamp-yes {
+  left: 20px;
+  color: #fff;
+  border-color: #fff;
+  background: rgba(0,0,0,0.3);
+  transform: translateY(-50%) rotate(-15deg);
+}
+.stamp-no {
+  right: 20px;
+  color: var(--red);
+  border-color: var(--red);
+  background: rgba(0,0,0,0.3);
+  transform: translateY(-50%) rotate(15deg);
+}
+
+/* Info overlay at bottom of photo (Tinder style) */
+.card-info {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  padding: 60px var(--space-lg) 14px;
+  background: linear-gradient(transparent 0%, rgba(0,0,0,0.72) 100%);
+  color: #fff;
+  z-index: 2;
+  pointer-events: none;
+}
+.card-info-name {
+  font-size: var(--text-lg);
+  font-weight: 700;
+  margin-bottom: 6px;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  color: #fff;
+}
+.card-info-line2 {
+  font-size: var(--text-base);
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 3px;
+}
+.card-info-line3 {
+  font-size: var(--text-base);
+  font-weight: 700;
+  color: #fff;
+}
+
+/* Side action buttons (doc + info) */
+.card-side-btns {
+  position: absolute;
+  bottom: 14px; right: var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 3;
+}
+.card-side-btn {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0,0,0,0.35);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  pointer-events: auto;
+  transition: all 0.15s;
+  color: #fff;
+}
+.card-side-btn:active {
+  background: rgba(0,0,0,0.55);
+  transform: scale(0.9);
+}
+.card-side-btn svg {
+  color: rgba(255,255,255,0.9);
+}
+
+/* Detail Sheet Overlay */
+.detail-sheet-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 200;
+  display: none;
+  justify-content: center;
+}
+.detail-sheet-overlay.open { display: flex; }
+.detail-sheet-backdrop {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.6);
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+.detail-sheet-overlay.open .detail-sheet-backdrop { opacity: 1; }
+
+.detail-sheet {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  max-width: 430px;
+  max-height: 93vh;
+  max-height: 93dvh;
+  background: #f5f5f5;
+  border-radius: 20px 20px 0 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transform: translateY(100%);
+  transition: transform 0.4s cubic-bezier(0.32, 0.72, 0, 1);
+}
+.detail-sheet-overlay.open .detail-sheet { transform: translateY(0); }
+
+/* Handle + Close */
+.detail-sheet-handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 0 0;
+  flex-shrink: 0;
+  cursor: pointer;
+  background: #f5f5f5;
+}
+.detail-sheet-handle-bar {
+  width: 36px; height: 4px;
+  background: #ccc;
+  border-radius: 2px;
+}
+.detail-sheet-close {
+  position: absolute;
+  top: 10px; right: 14px;
+  width: 30px; height: 30px;
+  border-radius: var(--radius-full);
+  background: rgba(0,0,0,0.06);
+  border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  z-index: 5;
+  color: #666;
+  backdrop-filter: blur(4px);
+}
+.detail-sheet-close:active { background: rgba(0,0,0,0.12); }
+
+/* Scroll area */
+.detail-sheet-scroll {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  padding: var(--space-md) var(--space-lg) 0;
+}
+
+/* Hero: name + station overlay on gradient/image */
+.ds-hero-card {
+  position: relative;
+  height: 200px;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  margin-bottom: var(--space-lg);
+  background: linear-gradient(135deg, #333 0%, #555 50%, #444 100%);
+}
+.ds-hero-card img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+}
+.ds-hero-overlay {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  padding: 48px var(--space-lg) var(--space-lg);
+  background: linear-gradient(transparent, rgba(0,0,0,0.75));
+  color: #fff;
+}
+.ds-hero-name {
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1.3;
+  margin-bottom: 4px;
+  letter-spacing: -0.3px;
+}
+.ds-hero-station {
+  font-size: var(--text-sm);
+  opacity: 0.85;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Key numbers bar */
+.ds-key-bar {
+  display: flex;
+  background: #1a1a1a;
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-lg);
+  overflow: hidden;
+}
+.ds-key-item {
+  flex: 1;
+  text-align: center;
+  padding: 14px 8px;
+}
+.ds-key-item + .ds-key-item {
+  border-left: 1px solid rgba(255,255,255,0.08);
+}
+.ds-key-label {
+  font-size: 10px;
+  color: rgba(255,255,255,0.45);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+.ds-key-value {
+  font-size: var(--text-base);
+  font-weight: 700;
+  color: #fff;
+}
+.ds-key-item.accent .ds-key-value {
+  color: #fff;
+}
+
+/* Table card sections */
+.ds-card {
+  background: #fff;
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-md);
+  overflow: hidden;
+}
+.ds-card-title {
+  font-size: var(--text-xs);
+  font-weight: 700;
+  color: #999;
+  padding: 14px var(--space-lg) 8px;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+.ds-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.ds-table tr {
+  border-top: 1px solid #f0f0f0;
+}
+.ds-table td {
+  padding: 12px var(--space-lg);
+  font-size: var(--text-sm);
+  vertical-align: middle;
+}
+.ds-table .ds-td-label {
+  color: #999;
+  width: 35%;
+  font-weight: 400;
+}
+.ds-table .ds-td-value {
+  color: #1a1a1a;
+  font-weight: 600;
+}
+
+/* Business type hierarchy */
+.ds-biz-category {
+  padding: 0 var(--space-lg);
+}
+.ds-biz-category + .ds-biz-category {
+  border-top: 1px solid #f0f0f0;
+}
+.ds-biz-cat-title {
+  font-size: var(--text-xs);
+  font-weight: 700;
+  color: #999;
+  padding: 12px 0 8px;
+  letter-spacing: 0.3px;
+}
+.ds-biz-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding-bottom: 14px;
+}
+.ds-biz-item {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: var(--radius-full);
+  font-size: var(--text-xs);
+  font-weight: 500;
+}
+/* 〇 出店可 - 黒背景 + 白文字 */
+.ds-biz-ok {
+  background: #000;
+  border: 1px solid #000;
+  color: #fff;
+  font-weight: 600;
+}
+/* 取消線 出店否 - 薄いグレー背景 + グレー文字 + 取消線 */
+.ds-biz-ng {
+  background: #f5f5f5;
+  border: 1px solid #e5e5e5;
+  color: #999;
+  font-weight: 400;
+  text-decoration: line-through;
+}
+/* ？ 未確認 - 白背景 + 黒文字 + グレーボーダー */
+.ds-biz-unknown {
+  background: #fff;
+  border: 1px solid #ccc;
+  color: #000;
+  font-weight: 500;
+}
+
+/* CTA */
+.detail-sheet-cta {
+  padding: var(--space-md) var(--space-lg) calc(var(--space-lg) + env(safe-area-inset-bottom, 0));
+  background: #f5f5f5;
+  border-top: 1px solid #e5e5e5;
+  flex-shrink: 0;
+}
+.detail-sheet-cta .btn-primary {
+  background: #1a1a1a;
+  color: #fff;
+}
+.detail-sheet-cta .btn-primary:hover {
+  background: #333;
+}
+
+/* Action buttons below cards */
+.swipe-actions {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 18px;
+  padding: var(--space-md) 0;
+  position: fixed;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 430px;
+  z-index: 15;
+}
+.action-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.action-btn {
+  display: flex; align-items: center; justify-content: center;
+  border: none; cursor: pointer;
+  transition: transform 0.15s;
+  -webkit-appearance: none;
+}
+.action-btn:active { transform: scale(0.88); }
+.action-btn-sm { width: 48px; height: 48px; border-radius: var(--radius-full); }
+.action-btn-lg { width: 64px; height: 64px; border-radius: var(--radius-full); }
+.action-undo { background: #FEF3C7; color: var(--amber); }
+.action-no { background: var(--bg-white); border: 2.5px solid var(--red) !important; color: var(--red); }
+.action-yes { background: #1a1a1a; color: #fff; box-shadow: 0 4px 16px rgba(0,0,0,0.2); }
+.action-detail { background: #f0f0f0; color: #1a1a1a; }
+.action-label { font-size: var(--text-xs); color: var(--text-tertiary); }
+
+/* ================================================================
+   PAGE: SWIPE COMPLETE
+   ================================================================ */
+.complete-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-xl);
+  padding-bottom: calc(var(--bottom-nav-height) + 40px);
+  text-align: center;
+  gap: var(--space-xl);
+  background: linear-gradient(180deg, #f5f5f5 0%, #fff 40%);
+}
+.complete-icon {
+  width: 88px; height: 88px;
+  background: #1a1a1a;
+  border-radius: var(--radius-full);
+  display: flex; align-items: center; justify-content: center;
+}
+.complete-title { font-size: 26px; font-weight: 800; }
+.complete-stats { font-size: var(--text-base); color: var(--text-secondary); line-height: 1.8; }
+.complete-stats .ct-yes { font-weight: 700; color: #1a1a1a; }
+.complete-stats .ct-no { font-weight: 700; color: var(--red); }
+.complete-stats .ct-skip { font-weight: 600; color: var(--text-tertiary); font-size: var(--text-sm); }
+.complete-stats .ct-skip-note { font-weight: 400; font-size: var(--text-xs); color: var(--text-tertiary); margin-left: 2px; }
+
+/* Skipped list items */
+.skipped-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-md) var(--space-lg);
+  margin-bottom: var(--space-sm);
+}
+.skipped-item-info { flex: 1; min-width: 0; }
+.skipped-item-name {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.skipped-item-meta {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.skipped-item-age {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.complete-actions { width: 100%; max-width: 280px; display: flex; flex-direction: column; gap: var(--space-md); }
+
+/* ================================================================
+   PAGE: PROPERTY DETAIL
+   ================================================================ */
+.detail-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: 80px;
+}
+.detail-gallery {
+  position: relative;
+  height: 240px;
+  background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 50%, #94a3b8 100%);
+  overflow: hidden;
+}
+.detail-gallery img { width: 100%; height: 100%; object-fit: cover; }
+.gallery-counter {
+  position: absolute;
+  bottom: var(--space-md); right: var(--space-md);
+  background: rgba(0,0,0,0.5);
+  color: #fff;
+  font-size: var(--text-xs);
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+}
+.gallery-dots {
+  position: absolute;
+  bottom: var(--space-md); left: 50%;
+  transform: translateX(-50%);
+  display: flex; gap: 6px;
+}
+.gallery-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.45);
+}
+.gallery-dot.active { background: #fff; }
+
+.detail-content { padding: var(--space-xl); }
+.detail-badges { display: flex; gap: var(--space-sm); margin-bottom: var(--space-md); }
+.detail-title {
+  font-size: var(--text-xl);
+  font-weight: 800;
+  margin-bottom: var(--space-md);
+  line-height: 1.4;
+}
+.detail-meta {
+  display: flex; align-items: center; gap: var(--space-sm);
+  font-size: var(--text-sm); color: var(--text-secondary);
+  margin-bottom: var(--space-sm);
+}
+.detail-meta svg { flex-shrink: 0; }
+
+.detail-key-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: var(--space-sm);
+  margin: var(--space-xl) 0;
+}
+.detail-key-item {
+  background: var(--bg);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  text-align: center;
+}
+.detail-key-label { font-size: var(--text-xs); color: var(--text-secondary); margin-bottom: 4px; }
+.detail-key-value { font-size: var(--text-lg); font-weight: 700; color: #1a1a1a; }
+
+.detail-section { margin-bottom: var(--space-xl); }
+.detail-section-title {
+  font-size: var(--text-base); font-weight: 700;
+  margin-bottom: var(--space-md);
+  padding-bottom: var(--space-sm);
+  border-bottom: 1px solid var(--border-light);
+}
+.detail-info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-md) var(--space-lg);
+}
+.detail-info-label { font-size: var(--text-xs); color: var(--text-secondary); margin-bottom: 2px; }
+.detail-info-value { font-size: var(--text-sm); font-weight: 600; }
+.detail-tags { display: flex; flex-wrap: wrap; gap: var(--space-sm); }
+
+.detail-map-btn {
+  display: flex; align-items: center; justify-content: center;
+  gap: var(--space-sm);
+  padding: 12px; width: 100%;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-white);
+  font-size: var(--text-sm); font-weight: 600;
+  color: var(--text-primary);
+  cursor: pointer;
+  font-family: var(--font);
+  margin-bottom: var(--space-xl);
+}
+.detail-map-btn:active { background: var(--bg-hover); }
+
+.detail-viewing-section {
+  background: var(--bg);
+  border-radius: var(--radius-lg);
+  padding: var(--space-xl);
+  margin-bottom: var(--space-xl);
+}
+.detail-viewing-title { font-size: var(--text-base); font-weight: 700; margin-bottom: var(--space-lg); }
+
+.radio-group { display: flex; flex-direction: column; gap: var(--space-sm); margin-bottom: var(--space-lg); }
+.radio-item {
+  display: flex; align-items: center; gap: var(--space-md);
+  padding: 12px var(--space-md);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  background: var(--bg-white);
+  font-size: var(--text-sm);
+  transition: all 0.15s;
+  user-select: none;
+}
+.radio-item.selected { border-color: #1a1a1a; background: #f5f5f5; }
+.radio-dot {
+  width: 18px; height: 18px;
+  border: 2px solid var(--border);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+.radio-item.selected .radio-dot { border-color: #1a1a1a; }
+.radio-item.selected .radio-dot::after {
+  content: '';
+  width: 10px; height: 10px;
+  background: #1a1a1a;
+  border-radius: 50%;
+}
+
+.detail-fixed-bottom {
+  position: fixed;
+  bottom: 0; left: 50%;
+  transform: translateX(-50%);
+  width: 100%; max-width: 430px;
+  background: var(--bg-white);
+  border-top: 1px solid var(--border-light);
+  padding: var(--space-md) var(--space-lg);
+  display: none;
+  gap: var(--space-md);
+  z-index: 50;
+}
+.detail-fixed-bottom .btn { flex: 1; padding: 12px; }
+
+/* ================================================================
+   PAGE: INTERESTED
+   ================================================================ */
+.tab-bar {
+  display: flex;
+  background: var(--bg-white);
+  border-bottom: 1px solid var(--border-light);
+  flex-shrink: 0;
+}
+.tab-item {
+  flex: 1;
+  display: flex; align-items: center; justify-content: center;
+  gap: var(--space-sm);
+  padding: 12px;
+  font-size: var(--text-sm); font-weight: 600;
+  color: var(--text-tertiary);
+  border: none; background: none; cursor: pointer;
+  border-bottom: 2.5px solid transparent;
+  font-family: var(--font);
+  transition: all 0.15s;
+}
+.tab-item.active { color: #1a1a1a; border-bottom-color: #1a1a1a; }
+.tab-count {
+  background: #1a1a1a; color: #fff;
+  font-size: var(--text-xs);
+  padding: 1px 8px;
+  border-radius: var(--radius-full);
+  font-weight: 600;
+}
+
+.list-body {
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: calc(var(--bottom-nav-height) + 80px);
+}
+.list-item {
+  display: flex; align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-md) var(--space-lg);
+  border-bottom: 1px solid var(--border-light);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.list-item:active { background: var(--bg-hover); }
+.list-thumb {
+  display: none;
+}
+.list-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+/* Line 1: Name + Condition Badge + Request Badge */
+.list-info-line1 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.list-info-name {
+  font-size: var(--text-base);
+  font-weight: 600;
+  color: var(--text-primary);
+  flex: 1;
+  min-width: 0;
+}
+.condition-badge {
+  background: var(--bg);
+  color: var(--text-primary);
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  font-weight: 600;
+  font-size: 11px;
+  border: 1px solid var(--border);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+/* Line 2: Station + Walk + Floor */
+.list-info-line2 {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+/* Line 3: Area + Rent */
+.list-info-line3 {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.list-spec-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+.list-spec-area {
+  color: var(--text-secondary);
+}
+.list-spec-rent {
+  color: #000;
+  font-weight: 700;
+}
+.list-info-date { font-size: var(--text-xs); color: var(--text-tertiary); }
+.list-chevron { color: var(--text-tertiary); flex-shrink: 0; }
+
+/* Date section header */
+.list-date-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-md) var(--space-lg) 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  background: rgba(247,248,250,0.9);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+.list-date-count {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+}
+/* NEW badge */
+.badge-new {
+  display: inline-block;
+  background: #ef4444;
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: var(--radius-full);
+  letter-spacing: 0.5px;
+  margin-left: 6px;
+  vertical-align: middle;
+  line-height: 1.4;
+}
+.badge-requested {
+  display: inline-block;
+  background: var(--primary);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: var(--radius-full);
+  letter-spacing: 0.3px;
+  margin-left: 6px;
+  vertical-align: middle;
+  line-height: 1.4;
+}
+
+/* List checkbox */
+.list-check {
+  width: 22px; height: 22px;
+  border: 2px solid #ccc;
+  border-radius: 6px;
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s;
+}
+.list-item.selected .list-check {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.list-item.selected {
+  background: var(--accent-light);
+}
+
+/* Selection bar */
+.list-selection-bar {
+  position: fixed;
+  bottom: calc(var(--bottom-nav-height) + 10px);
+  left: 50%; transform: translateX(-50%);
+  width: calc(100% - 32px);
+  max-width: 398px;
+  z-index: 15;
+  display: flex;
+  gap: var(--space-sm);
+  align-items: center;
+}
+.list-selection-bar .btn-primary {
+  flex: 1;
+  background: var(--accent);
+}
+.list-selection-bar .btn-primary:hover {
+  background: var(--accent-dark);
+}
+.list-selection-bar .btn-primary:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+.list-select-count {
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  white-space: nowrap;
+  padding-right: 4px;
+}
+
+/* ================================================================
+   DASHBOARD
+   ================================================================ */
+.dash-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-lg);
+  padding-bottom: calc(var(--bottom-nav-height) + 40px);
+}
+.dash-greeting {
+  font-size: var(--text-base);
+  color: var(--text-secondary);
+  margin-bottom: var(--space-lg);
+}
+.dash-greeting strong {
+  color: var(--text-primary);
+}
+/* CTA card */
+.dash-cta {
+  background: #fff;
+  border-radius: var(--radius-lg);
+  padding: 24px var(--space-xl);
+  color: #000;
+  margin-bottom: var(--space-xl);
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+}
+.dash-cta-label {
+  font-size: var(--text-xs);
+  color: #999;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+}
+.dash-cta-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 4px;
+}
+.dash-cta-num {
+  font-size: 72px;
+  font-weight: 900;
+  line-height: 1;
+}
+.dash-cta-num span {
+  font-size: 16px;
+  font-weight: 600;
+  color: #666;
+}
+.dash-cta-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #000;
+  color: #fff;
+  font-size: var(--text-sm);
+  font-weight: 700;
+  padding: 10px 20px;
+  border-radius: var(--radius-full);
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.dash-cta-btn:active { opacity: 0.8; }
+
+/* CTA breakdown (urgency indicators) */
+.dash-cta-breakdown {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid #e5e5e5;
+}
+.dash-cta-breakdown-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: #666;
+  font-weight: 500;
+}
+.dash-cta-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.dash-cta-dot.urgent { background: #ef4444; }
+.dash-cta-dot.warning { background: #f59e0b; }
+.dash-cta-dot.day1 { background: #fbbf24; }
+.dash-cta-dot.fresh { background: #06c755; }
+.dash-cta-breakdown-count {
+  font-weight: 700;
+  color: #000;
+  margin-left: 1px;
+}
+/* CTA expired link */
+.dash-cta-expired {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #e5e5e5;
+  font-size: 11px;
+  color: #999;
+  cursor: pointer;
+}
+.dash-cta-expired:active { color: #333; }
+.dash-cta-expired svg { flex-shrink: 0; }
+
+/* Stats row */
+.dash-section-title {
+  font-size: var(--text-xs);
+  font-weight: 700;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: var(--space-md);
+}
+.dash-stats {
+  display: flex;
+  gap: 6px;
+  margin-bottom: var(--space-xl);
+}
+.dash-stat {
+  flex: 1;
+  background: #fff;
+  border: 1px solid #f0f0f0;
+  border-radius: var(--radius-md);
+  padding: 18px 8px;
+  text-align: center;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  min-width: 0;
+}
+.dash-stat-value {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--primary);
+  line-height: 1;
+  margin-bottom: 4px;
+}
+.dash-stat-percent {
+  font-size: 14px;
+  font-weight: 600;
+}
+.dash-stat-label {
+  font-size: 10px;
+  color: var(--text-tertiary);
+  font-weight: 500;
+}
+
+/* Action items */
+.dash-action-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-md) var(--space-lg);
+  margin-bottom: var(--space-sm);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.dash-action-item:active { background: var(--bg-hover); }
+.dash-action-icon {
+  width: 36px; height: 36px;
+  border-radius: var(--radius-sm);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+.dash-action-icon.urgent { background: var(--amber-light); }
+.dash-action-icon.info { background: var(--blue-light); }
+.dash-action-info { flex: 1; min-width: 0; }
+.dash-action-name {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.dash-action-desc {
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+}
+.dash-action-arrow {
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+}
+
+/* ================================================================
+   VIEWING DETAIL PAGE
+   ================================================================ */
+.vd-body {
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: calc(var(--bottom-nav-height) + 40px);
+}
+/* Schedule section */
+.vd-schedule {
+  padding: var(--space-lg);
+}
+.vd-schedule-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-lg);
+}
+.vd-schedule-title {
+  font-size: var(--text-base);
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.vd-status-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+}
+.vd-status-badge.waiting {
+  background: var(--amber-light);
+  color: #92400e;
+}
+.vd-status-badge.confirmed {
+  background: var(--accent-light);
+  color: var(--accent-dark);
+}
+/* Date option cards */
+.vd-date-option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  background: #fff;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 14px var(--space-lg);
+  margin-bottom: var(--space-sm);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.vd-date-option:active { background: var(--bg-hover); }
+.vd-date-option.selected {
+  border-color: var(--accent);
+  background: var(--accent-light);
+}
+.vd-date-radio {
+  width: 20px; height: 20px;
+  border: 2px solid #ccc;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s;
+}
+.vd-date-option.selected .vd-date-radio {
+  border-color: var(--accent);
+}
+.vd-date-option.selected .vd-date-radio::after {
+  content: '';
+  width: 10px; height: 10px;
+  background: var(--accent);
+  border-radius: 50%;
+}
+.vd-date-info { flex: 1; }
+.vd-date-day {
+  font-size: var(--text-base);
+  font-weight: 700;
+}
+.vd-date-time {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+/* Action buttons */
+.vd-actions {
+  padding: 0 var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  margin-top: var(--space-md);
+}
+.vd-btn-confirm {
+  width: 100%;
+  padding: 14px;
+  background: var(--accent);
+  color: #fff;
+  font-size: var(--text-base);
+  font-weight: 700;
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+.vd-btn-confirm:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+.vd-btn-confirm:not(:disabled):active { opacity: 0.8; }
+.vd-btn-reject {
+  width: 100%;
+  padding: 12px;
+  background: none;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+.vd-btn-reject:active { background: var(--bg-hover); }
+/* Link to full detail */
+.vd-detail-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: var(--space-lg);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--blue);
+  cursor: pointer;
+}
+.vd-detail-link:active { opacity: 0.7; }
+/* Operator message */
+.vd-operator-msg {
+  background: var(--bg);
+  border-radius: var(--radius-md);
+  padding: var(--space-md) var(--space-lg);
+  margin-bottom: var(--space-lg);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+.vd-operator-msg strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+/* ================================================================
+   VIEWING REQUEST SHEET
+   ================================================================ */
+.vr-sheet-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 200;
+  display: none;
+  justify-content: center;
+}
+.vr-sheet-overlay.open { display: flex; }
+.vr-sheet-backdrop {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.6);
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+.vr-sheet-overlay.open .vr-sheet-backdrop { opacity: 1; }
+.vr-sheet {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  max-width: 430px;
+  max-height: 93dvh;
+  background: #f5f5f5;
+  border-radius: 20px 20px 0 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transform: translateY(100%);
+  transition: transform 0.4s cubic-bezier(0.32, 0.72, 0, 1);
+}
+.vr-sheet-overlay.open .vr-sheet { transform: translateY(0); }
+.vr-sheet-handle {
+  display: flex; align-items: center; justify-content: center;
+  padding: 10px 0 0; flex-shrink: 0;
+  cursor: pointer; background: #f5f5f5;
+}
+.vr-sheet-handle-bar { width: 36px; height: 4px; background: #ccc; border-radius: 2px; }
+.vr-sheet-header {
+  padding: var(--space-md) var(--space-lg) var(--space-sm);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.vr-sheet-title {
+  font-size: var(--text-lg);
+  font-weight: 800;
+  color: #1a1a1a;
+}
+.vr-sheet-close {
+  width: 30px; height: 30px;
+  border-radius: var(--radius-full);
+  background: rgba(0,0,0,0.06);
+  border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  color: #666;
+}
+.vr-sheet-scroll {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  padding: 0 var(--space-lg);
+}
+
+/* Selected properties summary */
+.vr-props {
+  background: #fff;
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-lg);
+  overflow: hidden;
+}
+.vr-prop-item {
+  display: flex; align-items: center;
+  gap: var(--space-md);
+  padding: 10px var(--space-md);
+}
+.vr-prop-item + .vr-prop-item {
+  border-top: 1px solid #f0f0f0;
+}
+.vr-prop-thumb {
+  width: 40px; height: 40px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #e2e8f0, #cbd5e1);
+  flex-shrink: 0;
+}
+.vr-prop-name {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: #1a1a1a;
+  flex: 1;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.vr-prop-rent {
+  font-size: var(--text-xs);
+  font-weight: 700;
+  color: #666;
+  flex-shrink: 0;
+}
+
+/* Section label */
+.vr-section-label {
+  font-size: var(--text-xs);
+  font-weight: 700;
+  color: #999;
+  letter-spacing: 0.5px;
+  margin-bottom: var(--space-sm);
+  text-transform: uppercase;
+}
+
+/* Date chips */
+.vr-date-scroll {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: var(--space-md);
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.vr-date-scroll::-webkit-scrollbar { display: none; }
+.vr-date-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 52px;
+  padding: 8px 6px;
+  border-radius: var(--radius-md);
+  border: 1.5px solid #e5e5e5;
+  background: #fff;
+  cursor: pointer;
+  transition: all 0.15s;
+  user-select: none;
+}
+.vr-date-chip.selected {
+  border-color: #1a1a1a;
+  background: #1a1a1a;
+  color: #fff;
+}
+.vr-date-dow {
+  font-size: 10px;
+  font-weight: 600;
+  color: #999;
+  margin-bottom: 2px;
+}
+.vr-date-chip.selected .vr-date-dow { color: rgba(255,255,255,0.6); }
+.vr-date-day {
+  font-size: var(--text-lg);
+  font-weight: 700;
+  color: #1a1a1a;
+  line-height: 1;
+}
+.vr-date-chip.selected .vr-date-day { color: #fff; }
+.vr-date-chip.sun .vr-date-dow { color: var(--red); }
+.vr-date-chip.sat .vr-date-dow { color: var(--blue); }
+
+/* Selected slots */
+.vr-slots {
+  margin-bottom: var(--space-lg);
+}
+.vr-slot-card {
+  background: #fff;
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  margin-bottom: var(--space-sm);
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+.vr-slot-date {
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: #1a1a1a;
+  min-width: 50px;
+}
+.vr-slot-times {
+  display: flex;
+  gap: 6px;
+  flex: 1;
+  flex-wrap: nowrap;
+}
+.vr-time-chip {
+  padding: 6px 12px;
+  border-radius: var(--radius-full);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  border: 1.5px solid #e5e5e5;
+  background: #fff;
+  color: #999;
+  cursor: pointer;
+  transition: all 0.15s;
+  user-select: none;
+}
+.vr-time-chip.selected {
+  border-color: #1a1a1a;
+  background: #1a1a1a;
+  color: #fff;
+}
+.vr-slot-remove {
+  width: 24px; height: 24px;
+  border: none; background: none;
+  color: #ccc; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.vr-slot-remove:active { color: var(--red); }
+
+/* Notes */
+.vr-notes {
+  margin-bottom: var(--space-lg);
+}
+.vr-notes textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1.5px solid #e5e5e5;
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  font-family: var(--font);
+  background: #fff;
+  resize: none;
+  min-height: 60px;
+}
+.vr-notes textarea:focus {
+  outline: none;
+  border-color: #1a1a1a;
+}
+
+/* CTA */
+.vr-cta {
+  padding: var(--space-md) var(--space-lg) calc(var(--space-lg) + env(safe-area-inset-bottom, 0));
+  background: #f5f5f5;
+  border-top: 1px solid #e5e5e5;
+  flex-shrink: 0;
+}
+.vr-cta .btn-primary {
+  background: #1a1a1a;
+  color: #fff;
+}
+.vr-cta .btn-primary:hover { background: #333; }
+
+.list-bottom-action {
+  position: fixed;
+  bottom: calc(var(--bottom-nav-height) + 10px);
+  left: 50%; transform: translateX(-50%);
+  width: calc(100% - 32px);
+  max-width: 398px;
+  z-index: 15;
+}
+
+/* ================================================================
+   PAGE: VIEWINGS
+   ================================================================ */
+.viewings-body {
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: calc(var(--bottom-nav-height) + 20px);
+}
+.viewing-card {
+  margin: var(--space-md) var(--space-lg);
+  background: var(--bg-white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  cursor: pointer;
+  border: 1px solid var(--border-light);
+  transition: transform 0.15s;
+}
+.viewing-card:active {
+  transform: scale(0.98);
+}
+.viewing-card-header {
+  background: #f5f5f5;
+  padding: var(--space-md) var(--space-lg);
+  font-size: var(--text-sm); font-weight: 700;
+  color: #1a1a1a;
+  display: flex; align-items: center; gap: var(--space-sm);
+}
+.viewing-card-body {
+  display: flex; align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-md) var(--space-lg);
+}
+.viewing-thumb {
+  width: 48px; height: 48px;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(135deg, #e2e8f0, #cbd5e1);
+  flex-shrink: 0;
+}
+.viewing-info { flex: 1; min-width: 0; }
+.viewing-name {
+  font-size: var(--text-sm); font-weight: 600; margin-bottom: 2px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.viewing-address { font-size: var(--text-xs); color: var(--text-secondary); }
+.viewing-status { flex-shrink: 0; }
+
+.empty-state {
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 60px var(--space-xl);
+  text-align: center;
+  color: var(--text-tertiary);
+  gap: var(--space-md);
+}
+.empty-state-text { font-size: var(--text-sm); line-height: 1.6; }
+
+/* ================================================================
+   PAGE: CRITERIA
+   ================================================================ */
+.criteria-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-xl);
+  padding-bottom: calc(var(--bottom-nav-height) + 40px);
+}
+.criteria-card {
+  background: var(--bg-white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-xl);
+  margin-bottom: var(--space-xl);
+}
+.criteria-card-head {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: var(--space-md);
+}
+.criteria-card-date { font-size: var(--text-xs); color: var(--text-tertiary); }
+.criteria-row {
+  display: flex; justify-content: space-between;
+  padding: var(--space-md) 0;
+  border-bottom: 1px solid var(--border-light);
+}
+.criteria-row:last-child { border-bottom: none; }
+.criteria-row-label { font-size: var(--text-sm); color: var(--text-secondary); }
+.criteria-row-value { font-size: var(--text-sm); font-weight: 600; }
+
+/* ================================================================
+   TOAST NOTIFICATION
+   ================================================================ */
+.toast {
+  position: fixed;
+  top: 60px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-20px);
+  background: rgba(26,29,35,0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: #fff;
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  z-index: 300;
+  opacity: 0;
+  transition: all 0.3s ease;
+  pointer-events: none;
+  max-width: 320px;
+  text-align: center;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+}
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ================================================================
+   PAGE TRANSITIONS
+   ================================================================ */
+.page {
+  animation: none;
+}
+.page.slide-in {
+  animation: pageSlideIn 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+@keyframes pageSlideIn {
+  from { opacity: 0; transform: translateX(40px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+.page.slide-back {
+  animation: pageSlideBack 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+@keyframes pageSlideBack {
+  from { opacity: 0; transform: translateX(-40px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+/* ================================================================
+   ONBOARDING PROGRESS DOTS
+   ================================================================ */
+.onboarding-progress {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 0 4px;
+  flex-shrink: 0;
+}
+.onboarding-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--border);
+  transition: all 0.3s ease;
+}
+.onboarding-dot.active {
+  background: #1a1a1a;
+  width: 24px;
+  border-radius: 4px;
+}
+.onboarding-dot.done {
+  background: #1a1a1a;
+}
+
+/* ================================================================
+   ENTRANCE ANIMATIONS
+   ================================================================ */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.8); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.guide-step {
+  opacity: 0;
+  animation: fadeUp 0.5s ease forwards;
+}
+.guide-step:nth-child(1) { animation-delay: 0.1s; }
+.guide-step:nth-child(2) { animation-delay: 0.25s; }
+.guide-step:nth-child(3) { animation-delay: 0.4s; }
+
+.complete-icon { animation: scaleIn 0.5s ease 0.1s forwards; opacity: 0; }
+.complete-title { animation: fadeUp 0.5s ease 0.3s forwards; opacity: 0; }
+.complete-stats { animation: fadeUp 0.5s ease 0.45s forwards; opacity: 0; }
+.complete-actions { animation: fadeUp 0.5s ease 0.6s forwards; opacity: 0; }
+
+/* Card entrance - uses opacity only to avoid conflicting with swipe transform */
+.swipe-card.card-main {
+  animation: cardEntrance 0.3s ease both;
+}
+@keyframes cardEntrance {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ================================================================
+   BOTTOM NAV BADGE
+   ================================================================ */
+.nav-item {
+  position: relative;
+}
+.nav-badge {
+  position: absolute;
+  top: 2px; right: 6px;
+  min-width: 18px; height: 18px;
+  background: var(--red);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+  line-height: 1;
+  transform: scale(0);
+  transition: transform 0.2s ease;
+}
+.nav-badge.visible { transform: scale(1); }
+#nav-badge-interested { background: var(--accent); }
+
+/* ================================================================
+   PHOTO CROSSFADE
+   ================================================================ */
+.card-image-area .photo-fade-enter {
+  animation: photoFadeIn 0.25s ease forwards;
+}
+@keyframes photoFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ================================================================
+   DRAG FEEDBACK ENHANCEMENTS
+   ================================================================ */
+.swipe-card.card-main.dragging {
+  box-shadow: 0 8px 40px rgba(0,0,0,0.18);
+}
+
+/* ================================================================
+   DESIGN POLISH (v4/v5)
+   ================================================================ */
+
+/* Dashboard CTA pulse effect */
+@keyframes ctaPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255,255,255,0.3); }
+  50% { box-shadow: 0 0 0 8px rgba(255,255,255,0); }
+}
+.dash-cta-btn {
+  animation: ctaPulse 2.5s ease-in-out infinite;
+}
+
+/* Dashboard stats - colored accents */
+.dash-stat { position: relative; overflow: hidden; }
+.dash-stat::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: var(--border);
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+}
+.dash-stat:nth-child(1)::before { background: var(--primary); }
+.dash-stat:nth-child(2)::before { background: var(--accent); }
+.dash-stat:nth-child(3)::before { background: var(--blue); }
+.dash-stat:nth-child(4)::before { background: var(--amber); }
+
+/* Dashboard action items - enhanced hover */
+.dash-action-item {
+  border-left: 3px solid transparent;
+}
+.dash-action-item:first-child {
+  border-left-color: var(--amber);
+}
+.dash-action-item:last-child {
+  border-left-color: var(--blue);
+}
+
+/* Criteria list item - hover accent */
+.criteria-list-item {
+  border-left: 3px solid transparent;
+}
+.criteria-list-item:first-child {
+  border-left-color: var(--accent);
+}
+
+/* ================================================================
+   INTERESTED LIST ENHANCEMENTS
+   ================================================================ */
+.list-item-detail-btn {
+  width: 32px; height: 32px;
+  border: none; background: none;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  border-radius: var(--radius-full);
+  transition: all 0.15s;
+}
+.list-item-detail-btn:active {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+/* ================================================================
+   CRITERIA CARD IMPROVEMENTS
+   ================================================================ */
+.criteria-card {
+  border: 1px solid var(--border-light);
+}
+.criteria-card-name {
+  font-size: var(--text-base);
+  font-weight: 700;
+  padding: var(--space-md) 0 var(--space-sm);
+  border-bottom: 1px solid var(--border-light);
+}
+
+/* ================================================================
+   FORM INPUT FOCUS LABEL ANIMATION
+   ================================================================ */
+.form-group-float {
+  position: relative;
+  margin-bottom: var(--space-xl);
+}
+.form-group-float .form-input {
+  padding-top: 18px;
+  padding-bottom: 6px;
+}
+.form-group-float .form-label-float {
+  position: absolute;
+  top: 50%; left: var(--space-lg);
+  transform: translateY(-50%);
+  font-size: var(--text-base);
+  color: var(--text-tertiary);
+  pointer-events: none;
+  transition: all 0.2s ease;
+}
+.form-group-float .form-input:focus + .form-label-float,
+.form-group-float .form-input:not(:placeholder-shown) + .form-label-float {
+  top: 10px;
+  transform: translateY(0);
+  font-size: var(--text-xs);
+  color: #1a1a1a;
+  font-weight: 600;
+}
+
+/* ================================================================
+   SUBTLE DETAILS
+   ================================================================ */
+/* Better scrollbar for sheet overlays */
+.detail-sheet-scroll::-webkit-scrollbar,
+.vr-sheet-scroll::-webkit-scrollbar {
+  width: 3px;
+}
+.detail-sheet-scroll::-webkit-scrollbar-track,
+.vr-sheet-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.detail-sheet-scroll::-webkit-scrollbar-thumb,
+.vr-sheet-scroll::-webkit-scrollbar-thumb {
+  background: #ddd;
+  border-radius: 2px;
+}
+
+/* Selection animation */
+.list-item.selected .list-check {
+  animation: checkPop 0.2s ease;
+}
+@keyframes checkPop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+
+/* ================================================================
+   CRITERIA LIST (COMPACT)
+   ================================================================ */
+.criteria-list-item {
+  background: var(--bg-white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-light);
+  padding: var(--space-lg);
+  margin-bottom: var(--space-md);
+  cursor: pointer;
+  transition: transform 0.15s;
+}
+.criteria-list-item:active { transform: scale(0.98); }
+.criteria-list-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-sm);
+}
+.criteria-list-name {
+  font-size: var(--text-base);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.criteria-list-sub {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin-bottom: var(--space-md);
+}
+.criteria-list-stats {
+  display: flex;
+  gap: 6px;
+}
+.criteria-stat {
+  flex: 1;
+  background: var(--bg);
+  border-radius: var(--radius-sm);
+  padding: 8px 4px;
+  text-align: center;
+  min-width: 0;
+}
+.criteria-stat-value {
+  font-size: var(--text-base);
+  font-weight: 800;
+  color: #1a1a1a;
+  line-height: 1;
+  margin-bottom: 2px;
+}
+.criteria-stat-label {
+  font-size: 9px;
+  color: var(--text-tertiary);
+  font-weight: 500;
+}
+
+/* ================================================================
+   CRITERIA DETAIL PAGE
+   ================================================================ */
+.cd-body {
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: calc(var(--bottom-nav-height) + 40px);
+}
+
+/* Period header */
+.cd-period-header {
+  padding: var(--space-lg) var(--space-lg) 0;
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+.cd-section-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+/* Stats summary */
+.cd-summary {
+  padding: var(--space-lg);
+}
+.cd-headline {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-bottom: var(--space-md);
+}
+.cd-headline-num {
+  font-size: 36px;
+  font-weight: 800;
+  color: #1a1a1a;
+  line-height: 1;
+}
+.cd-headline-unit {
+  font-size: var(--text-base);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+/* Stacked bar */
+.cd-bar-wrap {
+  margin-bottom: var(--space-md);
+}
+.cd-bar {
+  display: flex;
+  height: 14px;
+  border-radius: 7px;
+  overflow: hidden;
+  background: #f0f0f0;
+}
+.cd-bar-seg {
+  transition: width 0.4s ease;
+}
+.cd-bar-seg.yes { background: var(--primary); }
+.cd-bar-seg.no  { background: var(--text-tertiary); }
+.cd-bar-seg.pending { background: var(--bg-white); border: 1px solid var(--border); }
+/* Legend */
+.cd-legend {
+  display: flex;
+  gap: var(--space-lg);
+}
+.cd-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.cd-legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.cd-legend-dot.yes { background: var(--primary); }
+.cd-legend-dot.no  { background: var(--text-tertiary); }
+.cd-legend-dot.pending { background: var(--bg-white); border: 1px solid var(--border); }
+.cd-legend-num {
+  font-size: var(--text-base);
+  font-weight: 700;
+  color: #1a1a1a;
+  line-height: 1;
+}
+.cd-legend-label {
+  font-size: 10px;
+  color: var(--text-tertiary);
+}
+/* Action mini cards */
+.cd-action-row {
+  display: flex;
+  gap: var(--space-sm);
+  padding: 0 var(--space-lg);
+  margin-bottom: var(--space-lg);
+}
+.cd-action-card {
+  flex: 1;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 12px;
+  text-align: center;
+}
+.cd-action-value {
+  font-size: 22px;
+  font-weight: 800;
+  color: #1a1a1a;
+  line-height: 1;
+  margin-bottom: 2px;
+}
+.cd-action-label {
+  font-size: 10px;
+  color: var(--text-tertiary);
+  font-weight: 500;
+}
+
+/* Chart */
+.cd-chart-area {
+  padding: 0 var(--space-lg);
+  margin-bottom: var(--space-sm);
+}
+.cd-chart-label {
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  font-weight: 600;
+  margin-bottom: var(--space-sm);
+}
+.cd-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  height: 90px;
+}
+.cd-chart-bar-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  height: 100%;
+  justify-content: flex-end;
+}
+.cd-chart-bar {
+  width: 100%;
+  border-radius: 4px 4px 0 0;
+  min-height: 4px;
+  position: relative;
+}
+.cd-chart-bar-total {
+  background: var(--text-tertiary);
+}
+.cd-chart-bar-yes {
+  background: var(--primary);
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  border-radius: 4px 4px 0 0;
+}
+.cd-chart-day {
+  font-size: 9px;
+  color: var(--text-tertiary);
+  font-weight: 500;
+}
+.cd-chart-30d {
+  gap: 2px;
+  height: 80px;
+}
+.cd-chart-30d .cd-chart-bar-wrap {
+  gap: 0;
+}
+.cd-chart-axis {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 0 var(--space-lg);
+  font-size: 9px;
+  color: var(--text-tertiary);
+}
+
+/* Condition details section */
+.cd-section {
+  padding: var(--space-lg);
+}
+.cd-section-title {
+  font-size: var(--text-xs);
+  font-weight: 700;
+  color: var(--text-tertiary);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin-bottom: var(--space-md);
+}
+.cd-detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-sm);
+}
+.cd-detail-item {
+  background: var(--bg-white);
+  border-radius: var(--radius-sm);
+  padding: var(--space-md);
+  border: 1px solid var(--border-light);
+}
+.cd-detail-label {
+  font-size: 10px;
+  color: var(--text-tertiary);
+  margin-bottom: 2px;
+  font-weight: 500;
+}
+.cd-detail-value {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.cd-detail-item.full-width {
+  grid-column: span 2;
+}
+.cd-actions {
+  padding: var(--space-md) var(--space-lg) 0;
+  display: flex;
+  gap: var(--space-sm);
+}
+.cd-actions .btn { flex: 1; padding: 12px; }
+
+/* Divider for sections */
+.section-divider {
+  height: 8px;
+  background: var(--bg);
+  margin: 0 calc(var(--space-lg) * -1);
+}
+
+/* ================================================================
+   STATION PICKER (inline)
+   ================================================================ */
+.sp-header-text {
+  font-size: var(--text-base);
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: var(--space-sm);
+}
+.sp-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: var(--space-md);
+}
+.sp-tag {
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+  border: 1.5px solid var(--border);
+  background: var(--bg-white);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s;
+  user-select: none;
+  font-family: var(--font);
+}
+.sp-tag.active {
+  border-color: #1a1a1a;
+  background: #1a1a1a;
+  color: #fff;
+}
+.sp-tag:active { opacity: 0.7; }
+.sp-hint {
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  line-height: 1.5;
+  margin-bottom: var(--space-md);
+}
+.sp-search-wrap {
+  position: relative;
+  margin-bottom: 0;
+}
+.sp-search-wrap .form-input {
+  padding-left: 36px;
+  padding-right: 36px;
+}
+.sp-search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-tertiary);
+  pointer-events: none;
+}
+.sp-search-clear {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 24px; height: 24px;
+  border: none; background: none;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+.sp-search-clear.visible { display: flex; }
+.sp-search-clear:active { background: var(--bg-hover); }
+/* Results dropdown */
+.sp-results {
+  border: 1.5px solid var(--border);
+  border-top: none;
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+  background: var(--bg-white);
+  max-height: 200px;
+  overflow-y: auto;
+  display: none;
+}
+.sp-results.visible { display: block; }
+.sp-result-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px var(--space-lg);
+  cursor: pointer;
+  transition: background 0.1s;
+  border-top: 1px solid var(--border-light);
+}
+.sp-result-item:active { background: var(--bg-hover); }
+.sp-result-name {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.sp-result-meta {
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  margin-left: 6px;
+}
+.sp-result-check {
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+.sp-result-item.checked .sp-result-check {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.sp-result-item.checked .sp-result-name {
+  color: var(--accent-dark);
+}
+/* Counter */
+.sp-counter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-md) 0 var(--space-sm);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+.sp-counter-clear {
+  color: var(--text-tertiary);
+  cursor: pointer;
+  border: none; background: none;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  font-family: var(--font);
+}
+.sp-counter-clear:active { color: var(--text-primary); }
+/* Selected items */
+.sp-selected-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.sp-selected-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: 10px var(--space-md);
+  background: var(--bg);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-light);
+}
+.sp-selected-expand {
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+}
+.sp-selected-name {
+  flex: 1;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.sp-selected-meta {
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+}
+.sp-selected-remove {
+  width: 24px; height: 24px;
+  border: none; background: none;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  border-radius: 50%;
+}
+.sp-selected-remove:active { background: var(--bg-hover); color: var(--red); }
+/* Connected search+results border */
+.sp-search-wrap.has-results .form-input {
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  border-bottom-color: var(--border-light);
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- ============================================================
+     PAGE 1: WELCOME
+     ============================================================ -->
+<div id="page-welcome" class="page active">
+  <div class="welcome-bg">
+    <div class="welcome-logo">OpenStore</div>
+    <div class="welcome-tagline">出店に最適な物件を、スワイプで。</div>
+    <div class="welcome-btn-area">
+      <button class="btn btn-line" onclick="navigateTo('register')">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 2C6.48 2 2 5.64 2 10.2c0 2.85 1.89 5.35 4.72 6.81-.16.57-.58 2.12-.67 2.45-.1.41.15.4.32.29.13-.08 2.07-1.37 2.91-1.93.87.13 1.78.2 2.72.2 5.52 0 10-3.64 10-8.12S17.52 2 12 2z" fill="white"/></svg>
+        LINEでログイン
+      </button>
+      <div class="welcome-sub">LINEアカウントで簡単にログインできます</div>
+    </div>
+    <div style="position:absolute;bottom:20px;font-size:11px;opacity:0.4;color:#fff;">Prototype v6.0</div>
+  </div>
+</div>
+
+<!-- ============================================================
+     PAGE 2: REGISTER
+     ============================================================ -->
+<div id="page-register" class="page">
+  <div class="header">
+    <button class="header-back" onclick="navigateTo('welcome')">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M12.5 15L7.5 10L12.5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <div class="header-title">会員登録</div>
+  </div>
+  <div class="onboarding-progress">
+    <div class="onboarding-dot active"></div>
+    <div class="onboarding-dot"></div>
+    <div class="onboarding-dot"></div>
+    <div class="onboarding-dot"></div>
+    <div class="onboarding-dot"></div>
+    <div class="onboarding-dot"></div>
+  </div>
+  <div class="form-page-body">
+    <div class="form-group">
+      <label class="form-label">会社名</label>
+      <input type="text" class="form-input" placeholder="株式会社○○">
+    </div>
+    <div class="form-group">
+      <label class="form-label">担当者名</label>
+      <input type="text" class="form-input" placeholder="山田 太郎">
+    </div>
+    <div class="form-group">
+      <label class="form-label">携帯電話番号</label>
+      <input type="tel" class="form-input" placeholder="090-1234-5678">
+    </div>
+    <button class="btn btn-primary" onclick="navigateTo('guide')">登録する</button>
+  </div>
+</div>
+
+<!-- ============================================================
+     PAGE 2.5: ONBOARDING GUIDE
+     ============================================================ -->
+<div id="page-guide" class="page">
+  <div class="header">
+    <div class="header-title">OpenStoreの使い方</div>
+  </div>
+  <div class="onboarding-progress">
+    <div class="onboarding-dot done"></div>
+    <div class="onboarding-dot active"></div>
+    <div class="onboarding-dot"></div>
+    <div class="onboarding-dot"></div>
+    <div class="onboarding-dot"></div>
+    <div class="onboarding-dot"></div>
+  </div>
+  <div class="guide-body">
+    <div class="guide-hero">
+      <div class="guide-hero-title">3ステップで内見まで</div>
+      <div class="guide-hero-sub">出店に最適な物件を、かんたんに見つけられます</div>
+    </div>
+    <div class="guide-steps">
+      <div class="guide-step">
+        <div class="guide-step-num">1</div>
+        <div class="guide-step-content">
+          <div class="guide-step-title">条件を登録する</div>
+          <div class="guide-step-desc">希望のエリア・業態・坪数・予算などを設定。条件に合う物件が自動で届きます。</div>
+        </div>
+        <div class="guide-step-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#1a1a1a" stroke-width="1.5" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </div>
+      </div>
+      <div class="guide-step">
+        <div class="guide-step-num">2</div>
+        <div class="guide-step-content">
+          <div class="guide-step-title">スワイプで仕分け</div>
+          <div class="guide-step-desc">届いた物件カードを右スワイプで「気になる」、左で「興味なし」。直感でサクサク仕分け。</div>
+        </div>
+        <div class="guide-step-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#1a1a1a" stroke-width="1.5" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M9 12l2 2 4-4"/></svg>
+        </div>
+      </div>
+      <div class="guide-step">
+        <div class="guide-step-num">3</div>
+        <div class="guide-step-content">
+          <div class="guide-step-title">まとめて内見申込</div>
+          <div class="guide-step-desc">気になる物件を選んで、都合の良い日時を設定。一括で内見をリクエストできます。</div>
+        </div>
+        <div class="guide-step-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#1a1a1a" stroke-width="1.5" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        </div>
+      </div>
+    </div>
+    <div class="guide-cta">
+      <button class="btn btn-primary" onclick="navigateTo('criteria-biz')">条件を登録する</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     PAGE 3A: CRITERIA - BUSINESS TYPE
+     ============================================================ -->
+<div id="page-criteria-biz" class="page">
+  <div class="header">
+    <button class="header-back" onclick="navigateTo('guide')">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M12.5 15L7.5 10L12.5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <div class="header-title">業態を選択</div>
+  </div>
+  <div class="onboarding-progress" id="ob-progress-biz">
+    <div class="onboarding-dot done"></div>
+    <div class="onboarding-dot done"></div>
+    <div class="onboarding-dot active"></div>
+    <div class="onboarding-dot"></div>
+    <div class="onboarding-dot"></div>
+    <div class="onboarding-dot"></div>
+  </div>
+  <div class="form-page-body">
+    <div style="margin-bottom:var(--space-xl);">
+      <div style="font-size:var(--text-sm);color:var(--text-secondary);line-height:1.6;margin-bottom:var(--space-xl);">出店を検討している業態を選択してください。複数選択できます。</div>
+
+      <div style="font-size:var(--text-xs);font-weight:700;color:var(--text-tertiary);margin-bottom:var(--space-sm);letter-spacing:0.5px;">飲食</div>
+      <div class="checkbox-grid" style="margin-bottom:var(--space-lg);">
+        <div class="checkbox-item checked" onclick="toggleCheck(this)"><span class="check-icon"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6L5 9L10 3" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>ヘビー飲食</div>
+        <div class="checkbox-item checked" onclick="toggleCheck(this)"><span class="check-icon"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6L5 9L10 3" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>軽飲食</div>
+        <div class="checkbox-item" onclick="toggleCheck(this)"><span class="check-icon"></span>バー・クラブ</div>
+        <div class="checkbox-item" onclick="toggleCheck(this)"><span class="check-icon"></span>スナック</div>
+      </div>
+
+      <div style="font-size:var(--text-xs);font-weight:700;color:var(--text-tertiary);margin-bottom:var(--space-sm);letter-spacing:0.5px;">美容</div>
+      <div class="checkbox-grid" style="margin-bottom:var(--space-lg);">
+        <div class="checkbox-item" onclick="toggleCheck(this)"><span class="check-icon"></span>美容室・理容室</div>
+        <div class="checkbox-item" onclick="toggleCheck(this)"><span class="check-icon"></span>ネイルサロン</div>
+        <div class="checkbox-item" onclick="toggleCheck(this)"><span class="check-icon"></span>まつげサロン</div>
+        <div class="checkbox-item" onclick="toggleCheck(this)"><span class="check-icon"></span>エステサロン</div>
+        <div class="checkbox-item" onclick="toggleCheck(this)"><span class="check-icon"></span>リラクゼーション</div>
+      </div>
+
+      <div style="font-size:var(--text-xs);font-weight:700;color:var(--text-tertiary);margin-bottom:var(--space-sm);letter-spacing:0.5px;">ジム</div>
+      <div class="checkbox-grid" style="margin-bottom:var(--space-lg);">
+        <div class="checkbox-item" onclick="toggleCheck(this)"><span class="check-icon"></span>フィットネス</div>
+        <div class="checkbox-item" onclick="toggleCheck(this)"><span class="check-icon"></span>ゴルフスクール</div>
+        <div class="checkbox-item" onclick="toggleCheck(this)"><span class="check-icon"></span>道場・スポーツ教室</div>
+      </div>
+
+      <div style="font-size:var(--text-xs);font-weight:700;color:var(--text-tertiary);margin-bottom:var(--space-sm);letter-spacing:0.5px;">娯楽</div>
+      <div class="checkbox-grid" style="margin-bottom:var(--space-lg);">
+        <div class="checkbox-item" onclick="toggleCheck(this)"><span class="check-icon"></span>カラオケ</div>
+        <div class="checkbox-item" onclick="toggleCheck(this)"><span class="check-icon"></span>漫画カフェ</div>
+        <div class="checkbox-item" onclick="toggleCheck(this)"><span class="check-icon"></span>ゲームセンター</div>
+        <div class="checkbox-item" onclick="toggleCheck(this)"><span class="check-icon"></span>パチンコ</div>
+      </div>
+
+      <div style="font-size:var(--text-xs);font-weight:700;color:var(--text-tertiary);margin-bottom:var(--space-sm);letter-spacing:0.5px;">その他</div>
+      <div class="checkbox-grid" style="margin-bottom:0;">
+        <div class="checkbox-item" onclick="toggleCheck(this)"><span class="check-icon"></span>物販</div>
+        <div class="checkbox-item" onclick="toggleCheck(this)"><span class="check-icon"></span>医療施設</div>
+        <div class="checkbox-item" onclick="toggleCheck(this)"><span class="check-icon"></span>学習塾・教室</div>
+        <div class="checkbox-item" onclick="toggleCheck(this)"><span class="check-icon"></span>サービス業</div>
+      </div>
+    </div>
+
+    <button class="btn btn-primary" onclick="navigateTo('criteria-area')">次へ：エリアを設定</button>
+  </div>
+</div>
+
+<!-- ============================================================
+     PAGE 3B: CRITERIA - AREA
+     ============================================================ -->
+<div id="page-criteria-area" class="page">
+  <div class="header">
+    <button class="header-back" onclick="navigateTo('criteria-biz')">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M12.5 15L7.5 10L12.5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <div class="header-title">エリアを設定</div>
+  </div>
+  <div class="onboarding-progress" id="ob-progress-area">
+    <div class="onboarding-dot done"></div>
+    <div class="onboarding-dot done"></div>
+    <div class="onboarding-dot done"></div>
+    <div class="onboarding-dot active"></div>
+    <div class="onboarding-dot"></div>
+    <div class="onboarding-dot"></div>
+  </div>
+  <div class="form-page-body">
+    <div style="font-size:var(--text-sm);color:var(--text-secondary);line-height:1.6;margin-bottom:var(--space-xl);">出店を希望するエリアを設定してください。</div>
+
+    <!-- 条件名 -->
+    <div class="form-group">
+      <label class="form-label">条件名</label>
+      <input type="text" class="form-input" placeholder="渋谷エリア 飲食向け" value="渋谷・六本木 飲食">
+    </div>
+
+    <!-- 駅選択 -->
+    <div class="form-group" id="sp-container">
+      <div class="sp-header-text">最寄駅を選択してください</div>
+      <div class="sp-tags" id="sp-tags">
+        <button class="sp-tag" onclick="spToggleTag(this, 'terminal')">ターミナル駅</button>
+        <button class="sp-tag" onclick="spToggleTag(this, 'commercial')">商業立地</button>
+        <button class="sp-tag" onclick="spToggleTag(this, 'office')">オフィス需要</button>
+        <button class="sp-tag" onclick="spToggleTag(this, 'student')">大学生が多い</button>
+        <button class="sp-tag" onclick="spToggleTag(this, 'residential')">お勧め住居エリア</button>
+      </div>
+      <div class="sp-hint">プロが厳選したおすすめ駅です。駅の選択に困ったらお使いください</div>
+      <div class="sp-search-wrap" id="sp-search-wrap">
+        <span class="sp-search-icon">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </span>
+        <input type="text" class="form-input" id="sp-search-input" placeholder="駅名で検索" oninput="spSearch()" onfocus="spSearch()">
+        <button class="sp-search-clear" id="sp-search-clear" onclick="spClearSearch()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="sp-results" id="sp-results"></div>
+
+      <!-- 選択カウンター -->
+      <div class="sp-counter" id="sp-counter" style="display:none;">
+        <span id="sp-counter-text">選択中: 0駅</span>
+        <button class="sp-counter-clear" onclick="spClearAll()">すべてクリア</button>
+      </div>
+      <!-- 選択済みリスト -->
+      <div class="sp-selected-list" id="sp-selected-list"></div>
+    </div>
+
+    <!-- 徒歩 -->
+    <div class="form-group">
+      <label class="form-label">最寄り駅からの徒歩</label>
+      <select class="form-select">
+        <option>1分以内</option>
+        <option>3分以内</option>
+        <option>5分以内</option>
+        <option>7分以内</option>
+        <option selected>10分以内</option>
+      </select>
+    </div>
+
+    <button class="btn btn-primary" onclick="navigateTo('criteria-specs')">次へ：物件条件を設定</button>
+  </div>
+</div>
+
+<!-- ============================================================
+     PAGE 3C: CRITERIA - PROPERTY SPECS
+     ============================================================ -->
+<div id="page-criteria-specs" class="page">
+  <div class="header">
+    <button class="header-back" onclick="navigateTo('criteria-area')">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M12.5 15L7.5 10L12.5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <div class="header-title">物件条件</div>
+  </div>
+  <div class="onboarding-progress" id="ob-progress-specs">
+    <div class="onboarding-dot done"></div>
+    <div class="onboarding-dot done"></div>
+    <div class="onboarding-dot done"></div>
+    <div class="onboarding-dot done"></div>
+    <div class="onboarding-dot active"></div>
+    <div class="onboarding-dot"></div>
+  </div>
+  <div class="form-page-body">
+    <div style="font-size:var(--text-sm);color:var(--text-secondary);line-height:1.6;margin-bottom:var(--space-xl);">希望する物件のスペックを設定してください。</div>
+
+    <!-- 坪数 -->
+    <div class="form-group">
+      <label class="form-label">坪数</label>
+      <div class="form-row">
+        <div class="form-group"><input type="text" class="form-input" placeholder="下限" value="20"></div>
+        <span style="color:var(--text-tertiary);flex-shrink:0;">〜</span>
+        <div class="form-group"><input type="text" class="form-input" placeholder="上限" value="100"></div>
+      </div>
+    </div>
+
+    <!-- 階数 -->
+    <div class="form-group">
+      <label class="form-label">階数</label>
+      <div class="checkbox-grid">
+        <div class="checkbox-item" onclick="toggleCheck(this)"><span class="check-icon"></span>B1F</div>
+        <div class="checkbox-item checked" onclick="toggleCheck(this)"><span class="check-icon"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6L5 9L10 3" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>1F</div>
+        <div class="checkbox-item" onclick="toggleCheck(this)"><span class="check-icon"></span>2F</div>
+        <div class="checkbox-item" onclick="toggleCheck(this)"><span class="check-icon"></span>3F以上</div>
+      </div>
+    </div>
+
+    <!-- 坪賃料上限 -->
+    <div class="form-group">
+      <label class="form-label">坪賃料（上限）</label>
+      <div class="form-row">
+        <div class="form-group" style="flex:1;"><input type="text" class="form-input" placeholder="25,000"></div>
+        <span style="color:var(--text-tertiary);flex-shrink:0;">円/坪</span>
+      </div>
+    </div>
+
+    <!-- 初期費用上限 -->
+    <div class="form-group">
+      <label class="form-label">初期費用（上限）</label>
+      <div class="form-row">
+        <div class="form-group" style="flex:1;"><input type="text" class="form-input" placeholder="500"></div>
+        <span style="color:var(--text-tertiary);flex-shrink:0;">万円</span>
+      </div>
+    </div>
+
+    <button class="btn btn-primary" onclick="navigateTo('tutorial')">この条件で始める</button>
+  </div>
+</div>
+
+<!-- ============================================================
+     PAGE 4: TUTORIAL
+     ============================================================ -->
+<div id="page-tutorial" class="page">
+  <div class="header">
+    <button class="header-back" onclick="navigateTo('criteria-specs')">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M12.5 15L7.5 10L12.5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <div class="header-title">使い方</div>
+  </div>
+  <div class="onboarding-progress">
+    <div class="onboarding-dot done"></div>
+    <div class="onboarding-dot done"></div>
+    <div class="onboarding-dot done"></div>
+    <div class="onboarding-dot done"></div>
+    <div class="onboarding-dot done"></div>
+    <div class="onboarding-dot active"></div>
+  </div>
+  <div class="tutorial-body">
+    <div class="tutorial-labels">
+      <div class="tutorial-label-no">&larr; 興味なし</div>
+      <div class="tutorial-label-yes">興味あり &rarr;</div>
+    </div>
+    <div class="tutorial-card-wrap">
+      <div class="tutorial-card">
+        <div class="tutorial-card-img">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+        </div>
+        <div class="tutorial-card-body">
+          <h4>渋谷区神南一丁目 商業ビル用地</h4>
+          <p>🚉 渋谷駅 徒歩5分<br>📐 45.2坪　💰 350万円</p>
+        </div>
+      </div>
+      <div class="tutorial-hand">👆</div>
+    </div>
+    <p class="tutorial-desc">
+      カードを右にスワイプで「興味あり」<br>
+      左にスワイプで「興味なし」
+    </p>
+    <div style="width:100%;max-width:280px;">
+      <button class="btn btn-primary" onclick="navigateTo('dashboard')">スワイプを始める</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     DASHBOARD
+     ============================================================ -->
+<div id="page-dashboard" class="page" style="background:var(--bg);">
+  <div class="header"><div class="header-title">ホーム</div></div>
+  <div class="dash-body">
+    <div class="dash-greeting">おはようございます、<strong>田中</strong>様</div>
+
+    <!-- CTA: 未仕分け (日別内訳付き) -->
+    <div class="dash-cta">
+      <div class="dash-cta-label">未仕分けの物件</div>
+      <div class="dash-cta-header">
+        <div class="dash-cta-num" id="dash-cta-num">7 <span>件</span></div>
+        <button class="dash-cta-btn" onclick="navigateTo('swipe')">
+          仕分けを始める
+          <svg width="14" height="14" viewBox="0 0 20 20" fill="none"><path d="M7.5 5L12.5 10L7.5 15" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+      <div class="dash-cta-breakdown" id="dash-cta-breakdown">
+        <div class="dash-cta-breakdown-item">
+          <span class="dash-cta-dot fresh"></span>
+          <span>今日</span>
+          <span class="dash-cta-breakdown-count" id="cta-day0-count">4</span><span>件</span>
+        </div>
+        <div class="dash-cta-breakdown-item">
+          <span class="dash-cta-dot day1"></span>
+          <span>1日前</span>
+          <span class="dash-cta-breakdown-count" id="cta-day1-count">3</span><span>件</span>
+        </div>
+        <div class="dash-cta-breakdown-item">
+          <span class="dash-cta-dot warning"></span>
+          <span>2日前</span>
+          <span class="dash-cta-breakdown-count" id="cta-day2-count">0</span><span>件</span>
+        </div>
+        <div class="dash-cta-breakdown-item">
+          <span class="dash-cta-dot urgent"></span>
+          <span>3日前</span>
+          <span class="dash-cta-breakdown-count" id="cta-day3-count">0</span><span>件</span>
+        </div>
+      </div>
+      <div class="dash-cta-expired" id="dash-cta-expired" onclick="navigateTo('skipped')">
+        <span>直近30日のスキップ</span>
+        <span class="dash-cta-breakdown-count" id="cta-expired-count">7</span><span>件</span>
+        <svg width="12" height="12" viewBox="0 0 20 20" fill="none"><path d="M7.5 5L12.5 10L7.5 15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+    </div>
+
+    <!-- 直近7日間 -->
+    <div class="dash-section-title">直近7日間</div>
+    <div class="dash-stats">
+      <div class="dash-stat">
+        <div class="dash-stat-value">12</div>
+        <div class="dash-stat-label">配信</div>
+      </div>
+      <div class="dash-stat">
+        <div class="dash-stat-value">5</div>
+        <div class="dash-stat-label">興味あり</div>
+      </div>
+      <div class="dash-stat">
+        <div class="dash-stat-value">2</div>
+        <div class="dash-stat-label">内見</div>
+      </div>
+      <div class="dash-stat">
+        <div class="dash-stat-value">42<span class="dash-stat-percent">%</span></div>
+        <div class="dash-stat-label">興味あり率</div>
+      </div>
+    </div>
+
+    <!-- 対応が必要 -->
+    <div class="dash-section-title">対応が必要</div>
+    <div class="dash-action-item" onclick="openViewingDetail(4)">
+      <div class="dash-action-icon urgent">⚡</div>
+      <div class="dash-action-info">
+        <div class="dash-action-name">中央区銀座六丁目 商業施設</div>
+        <div class="dash-action-desc">内見日程の回答待ち</div>
+      </div>
+      <div class="dash-action-arrow">
+        <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M7.5 5L12.5 10L7.5 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+    </div>
+    <div class="dash-action-item" onclick="navigateTo('viewings')">
+      <div class="dash-action-icon info">📋</div>
+      <div class="dash-action-info">
+        <div class="dash-action-name">千代田区丸の内一丁目 複合ビル</div>
+        <div class="dash-action-desc">内見予定: 2/20(木) 14:00</div>
+      </div>
+      <div class="dash-action-arrow">
+        <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M7.5 5L12.5 10L7.5 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     PAGE 5: SWIPE (HERO FEATURE)
+     ============================================================ -->
+<div id="page-swipe" class="page">
+  <div class="swipe-header">
+    <div class="swipe-header-title">物件仕分け</div>
+    <div class="swipe-progress-text" id="swipe-progress-text">1 / 7</div>
+  </div>
+  <div class="swipe-progress-bar">
+    <div class="swipe-progress-fill" id="swipe-progress-fill" style="width:14.3%"></div>
+  </div>
+  <div class="swipe-area">
+    <div class="card-stack" id="card-stack"></div>
+  </div>
+  <div class="swipe-actions" id="swipe-actions" style="display:none;">
+    <div class="action-wrap">
+      <button class="action-btn action-btn-sm action-home" onclick="navigateTo('dashboard')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      </button>
+      <span class="action-label">ホーム</span>
+    </div>
+    <div class="action-wrap">
+      <button class="action-btn action-btn-sm action-undo" onclick="undoSwipe()" id="btn-undo">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 105.64-12.36L1 10"/></svg>
+      </button>
+      <span class="action-label">戻る</span>
+    </div>
+    <div class="action-wrap">
+      <button class="action-btn action-btn-lg action-no" onclick="buttonSwipe('no')">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+      <span class="action-label">興味なし</span>
+    </div>
+    <div class="action-wrap">
+      <button class="action-btn action-btn-lg action-yes" onclick="buttonSwipe('yes')">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"><path d="M20 6L9 17L4 12"/></svg>
+      </button>
+      <span class="action-label">興味あり</span>
+    </div>
+    <div class="action-wrap">
+      <button class="action-btn action-btn-sm action-detail" onclick="showDetail()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+      </button>
+      <span class="action-label">詳細</span>
+    </div>
+    <div class="action-wrap">
+      <button class="action-btn action-btn-sm action-doc" onclick="openPropertyDocFromSwipe()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      </button>
+      <span class="action-label">概要書</span>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     PAGE 6: SWIPE COMPLETE
+     ============================================================ -->
+<div id="page-swipe-complete" class="page">
+  <div class="header"><div class="header-title">仕分け完了</div></div>
+  <div class="complete-body">
+    <div class="complete-icon">
+      <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"><path d="M20 6L9 17L4 12"/></svg>
+    </div>
+    <div class="complete-title">チェック完了！</div>
+    <div class="complete-stats">
+      <span class="ct-yes">興味あり <span id="complete-yes">3</span>件</span><br>
+      <span class="ct-no">興味なし <span id="complete-no">5</span>件</span>
+      <span class="ct-skip" id="complete-skip-wrap" style="display:none;"><br>スキップ <span id="complete-skip">0</span>件<span class="ct-skip-note">（期限切れ）</span></span>
+    </div>
+    <div class="complete-actions">
+      <button class="btn btn-primary" onclick="navigateTo('interested')">興味あり物件を見る</button>
+      <button class="btn btn-outline" onclick="resetSwipe();navigateTo('dashboard')">ホームに戻る</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     SKIPPED LIST (直近30日のスキップ済み)
+     ============================================================ -->
+<div id="page-skipped" class="page" style="background:var(--bg);">
+  <div class="header">
+    <button class="header-back" onclick="navigateTo('dashboard')">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M12.5 15L7.5 10L12.5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <div class="header-title">スキップ済み物件</div>
+  </div>
+  <div style="padding:calc(var(--header-height) + 12px) var(--space-lg) 40px;">
+    <div style="font-size:var(--text-sm);color:var(--text-secondary);margin-bottom:var(--space-lg);">
+      4日以上経過した未仕分け物件は自動的にスキップされます。直近30日分を表示しています。
+    </div>
+    <div id="skipped-list"></div>
+  </div>
+</div>
+
+<!-- ============================================================
+     PAGE 7: PROPERTY DETAIL
+     ============================================================ -->
+<div id="page-property-detail" class="page" style="background:#f5f5f5;">
+  <div class="header">
+    <button class="header-back" onclick="goBackFromDetail()">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M12.5 15L7.5 10L12.5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <div class="header-title">物件詳細</div>
+  </div>
+  <div class="detail-scroll" id="detail-scroll">
+    <!-- Hero image with overlay -->
+    <div class="ds-hero-card" id="detail-hero" style="margin:0;border-radius:0;height:220px;">
+      <div class="ds-hero-overlay">
+        <div class="ds-hero-name" id="detail-title">渋谷区神南一丁目 商業ビル用地</div>
+        <div class="ds-hero-station">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          <span id="detail-station-text">渋谷駅 徒歩5分</span>
+        </div>
+      </div>
+      <!-- Photo dots -->
+      <div class="gallery-dots" style="position:absolute;bottom:52px;left:50%;transform:translateX(-50%);z-index:3;">
+        <div class="gallery-dot active"></div><div class="gallery-dot"></div><div class="gallery-dot"></div><div class="gallery-dot"></div>
+      </div>
+    </div>
+
+    <div style="padding:0 var(--space-lg);">
+      <!-- Key numbers bar -->
+      <div class="ds-key-bar" style="margin-top:var(--space-lg);">
+        <div class="ds-key-item">
+          <div class="ds-key-label">坪数</div>
+          <div class="ds-key-value" id="detail-area">45.2坪</div>
+        </div>
+        <div class="ds-key-item">
+          <div class="ds-key-label">階数</div>
+          <div class="ds-key-value" id="detail-floor">B1-5F</div>
+        </div>
+        <div class="ds-key-item accent">
+          <div class="ds-key-label">月額賃料</div>
+          <div class="ds-key-value" id="detail-rent">350万円</div>
+        </div>
+      </div>
+
+      <!-- 物件情報 table -->
+      <div class="ds-card" style="margin-top:var(--space-lg);">
+        <div class="ds-card-title">物件情報</div>
+        <table class="ds-table">
+          <tr><td class="ds-td-label">坪賃料</td><td class="ds-td-value" id="detail-tsubo-rent">7.7万円/坪</td></tr>
+          <tr><td class="ds-td-label">初期費用</td><td class="ds-td-value">応相談</td></tr>
+          <tr><td class="ds-td-label">敷金</td><td class="ds-td-value">12ヶ月</td></tr>
+          <tr><td class="ds-td-label">礼金</td><td class="ds-td-value">なし</td></tr>
+          <tr><td class="ds-td-label">管理費</td><td class="ds-td-value">30,000円/月</td></tr>
+        </table>
+      </div>
+
+      <!-- 設備情報 table -->
+      <div class="ds-card">
+        <div class="ds-card-title">設備情報</div>
+        <table class="ds-table">
+          <tr><td class="ds-td-label">状態</td><td class="ds-td-value">スケルトン</td></tr>
+          <tr><td class="ds-td-label">給排水</td><td class="ds-td-value">あり</td></tr>
+          <tr><td class="ds-td-label">トイレ</td><td class="ds-td-value">専用</td></tr>
+          <tr><td class="ds-td-label">エアコン</td><td class="ds-td-value">個別空調</td></tr>
+          <tr><td class="ds-td-label">ダクト</td><td class="ds-td-value">設置可</td></tr>
+          <tr><td class="ds-td-label">天井高</td><td class="ds-td-value">3.2m</td></tr>
+        </table>
+      </div>
+
+      <!-- 出店可能業態 -->
+      <div class="ds-card" id="detail-biz-card">
+        <!-- Business types will be populated dynamically -->
+      </div>
+
+      <!-- Google Map -->
+      <button class="detail-map-btn" onclick="alert('Google マップを開きます')" style="margin-bottom:var(--space-md);">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        Google マップで見る
+      </button>
+
+      <!-- 物件概要書 -->
+      <button class="detail-map-btn" onclick="showToast('物件概要書を表示します')" style="margin-bottom:var(--space-xl);">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        物件概要書を見る
+      </button>
+
+      <div style="height:24px;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     PAGE 8: INTERESTED
+     ============================================================ -->
+<div id="page-interested" class="page">
+  <div class="header"><div class="header-title">興味あり物件</div></div>
+  <span id="interested-count" style="display:none;"></span>
+  <div class="list-body" id="interested-list"></div>
+  <div class="list-selection-bar" id="selection-bar">
+    <span class="list-select-count" id="select-count-text">0件選択</span>
+    <button class="btn btn-primary" id="btn-request-viewing" disabled onclick="openViewingRequest()">内見をリクエスト</button>
+  </div>
+</div>
+
+<!-- ============================================================
+     PAGE 9: VIEWINGS
+     ============================================================ -->
+<div id="page-viewings" class="page">
+  <div class="header"><div class="header-title">内見</div></div>
+  <div class="tab-bar">
+    <button class="tab-item active" data-tab="viewings-pending" onclick="switchTab(this,'viewings')">調整中 <span class="tab-count">2</span></button>
+    <button class="tab-item" data-tab="viewings-upcoming" onclick="switchTab(this,'viewings')">予定</button>
+    <button class="tab-item" data-tab="viewings-done" onclick="switchTab(this,'viewings')">完了</button>
+  </div>
+  <!-- 調整中タブ -->
+  <div class="viewings-body" id="viewings-pending">
+    <div class="viewing-card" onclick="openViewingDetail(4)">
+      <div class="viewing-card-header">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        日程が提案されています（要回答）
+      </div>
+      <div class="viewing-card-body">
+        <div class="viewing-thumb"></div>
+        <div class="viewing-info">
+          <div class="viewing-name">中央区銀座六丁目 商業施設</div>
+          <div class="viewing-address">東京都中央区銀座六丁目6-1</div>
+        </div>
+        <div class="viewing-status"><span class="badge badge-amber">回答待ち</span></div>
+      </div>
+    </div>
+    <div class="viewing-card" onclick="openViewingDetail(6)">
+      <div class="viewing-card-header">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        希望日を送信済み・運営からの返答待ち
+      </div>
+      <div class="viewing-card-body">
+        <div class="viewing-thumb"></div>
+        <div class="viewing-info">
+          <div class="viewing-name">目黒区自由が丘二丁目 店舗</div>
+          <div class="viewing-address">東京都目黒区自由が丘二丁目3-5</div>
+        </div>
+        <div class="viewing-status"><span class="badge badge-amber">調整中</span></div>
+      </div>
+    </div>
+  </div>
+  <!-- 予定タブ -->
+  <div class="viewings-body" id="viewings-upcoming" style="display:none;">
+    <div class="viewing-card">
+      <div class="viewing-card-header">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        2026年2月25日（水）10:00〜
+      </div>
+      <div class="viewing-card-body">
+        <div class="viewing-thumb"></div>
+        <div class="viewing-info">
+          <div class="viewing-name">渋谷区神南一丁目 商業ビル用地</div>
+          <div class="viewing-address">東京都渋谷区神南一丁目1-1</div>
+        </div>
+        <div class="viewing-status"><span class="badge badge-green">確定</span></div>
+      </div>
+    </div>
+  </div>
+  <!-- 完了タブ -->
+  <div class="viewings-body" id="viewings-done" style="display:none;">
+    <div class="empty-state">
+      <div style="width:64px;height:64px;border-radius:50%;background:var(--bg);display:flex;align-items:center;justify-content:center;">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" stroke-width="1.5" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      </div>
+      <div class="empty-state-text">完了した内見はまだありません<br><span style="font-size:var(--text-xs);color:var(--text-tertiary);">内見が完了すると、ここに表示されます</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     VIEWING DETAIL (日程調整)
+     ============================================================ -->
+<div id="page-viewing-detail" class="page" style="background:var(--bg);">
+  <div class="header">
+    <button class="header-back" onclick="navigateTo('viewings')">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M12.5 15L7.5 10L12.5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <div class="header-title">内見調整</div>
+  </div>
+  <div class="vd-body">
+    <!-- Property hero (reuse ds-hero-card) -->
+    <div class="ds-hero-card" id="vd-hero" style="margin:0;border-radius:0;height:180px;">
+      <div class="ds-hero-overlay">
+        <div class="ds-hero-name" id="vd-title">中央区銀座六丁目 商業施設</div>
+        <div class="ds-hero-station">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          <span id="vd-station">銀座駅 徒歩2分</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Key bar -->
+    <div style="padding:0 var(--space-lg);">
+      <div class="ds-key-bar" style="margin-top:var(--space-lg);">
+        <div class="ds-key-item">
+          <div class="ds-key-label">坪数</div>
+          <div class="ds-key-value" id="vd-area">85.0坪</div>
+        </div>
+        <div class="ds-key-item">
+          <div class="ds-key-label">階数</div>
+          <div class="ds-key-value" id="vd-floor">B1-10F</div>
+        </div>
+        <div class="ds-key-item accent">
+          <div class="ds-key-label">月額賃料</div>
+          <div class="ds-key-value" id="vd-rent">680万円</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Schedule section -->
+    <div class="vd-schedule">
+      <div class="vd-schedule-header">
+        <div class="vd-schedule-title">📅 日程調整</div>
+        <span class="vd-status-badge waiting" id="vd-status-badge">回答待ち</span>
+      </div>
+
+      <div class="vd-operator-msg">
+        <strong>OpenStore運営</strong>より日程のご提案です。<br>
+        ご都合の良い日程を1つ選択してください。
+      </div>
+
+      <!-- Date options -->
+      <div id="vd-date-options">
+        <div class="vd-date-option" onclick="selectVdDate(this, 0)">
+          <div class="vd-date-radio"></div>
+          <div class="vd-date-info">
+            <div class="vd-date-day">2月20日（木）</div>
+            <div class="vd-date-time">14:00〜15:00</div>
+          </div>
+        </div>
+        <div class="vd-date-option" onclick="selectVdDate(this, 1)">
+          <div class="vd-date-radio"></div>
+          <div class="vd-date-info">
+            <div class="vd-date-day">2月21日（金）</div>
+            <div class="vd-date-time">10:00〜11:00</div>
+          </div>
+        </div>
+        <div class="vd-date-option" onclick="selectVdDate(this, 2)">
+          <div class="vd-date-radio"></div>
+          <div class="vd-date-info">
+            <div class="vd-date-day">2月22日（土）</div>
+            <div class="vd-date-time">13:00〜14:00</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="vd-actions">
+        <button class="vd-btn-confirm" id="vd-btn-confirm" disabled onclick="confirmViewingDate()">この日程で確定する</button>
+        <button class="vd-btn-reject" onclick="rejectViewingDates()">都合が合わない</button>
+      </div>
+    </div>
+
+    <!-- Link to full property detail -->
+    <div class="vd-detail-link" onclick="openDetailFromViewing()">
+      物件の詳細を見る
+      <svg width="14" height="14" viewBox="0 0 20 20" fill="none"><path d="M7.5 5L12.5 10L7.5 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     PAGE 10: CRITERIA LIST
+     ============================================================ -->
+<div id="page-criteria" class="page">
+  <div class="header"><div class="header-title">検索条件</div></div>
+  <div class="criteria-body">
+    <!-- Active condition -->
+    <div class="criteria-list-item" onclick="navigateTo('criteria-detail')">
+      <div class="criteria-list-head">
+        <div class="criteria-list-name">渋谷・六本木 飲食</div>
+        <span class="badge badge-green">有効</span>
+      </div>
+      <div class="criteria-list-sub">ヘビー飲食・軽飲食 ｜ 15駅 ｜ 徒歩10分 ｜ 20～50坪</div>
+      <div class="criteria-list-stats">
+        <div class="criteria-stat">
+          <div class="criteria-stat-value">24</div>
+          <div class="criteria-stat-label">配信数</div>
+        </div>
+        <div class="criteria-stat">
+          <div class="criteria-stat-value">9</div>
+          <div class="criteria-stat-label">興味あり数</div>
+        </div>
+        <div class="criteria-stat">
+          <div class="criteria-stat-value">38%</div>
+          <div class="criteria-stat-label">興味率</div>
+        </div>
+        <div class="criteria-stat">
+          <div class="criteria-stat-value">3</div>
+          <div class="criteria-stat-label">内見済</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Paused condition -->
+    <div class="criteria-list-item" onclick="navigateTo('criteria-detail')">
+      <div class="criteria-list-head">
+        <div class="criteria-list-name">銀座・丸の内 物販</div>
+        <span class="badge badge-gray">停止中</span>
+      </div>
+      <div class="criteria-list-sub">物販 ｜ 2駅 ｜ 徒歩5分 ｜ 50～120坪</div>
+      <div class="criteria-list-stats">
+        <div class="criteria-stat">
+          <div class="criteria-stat-value">3</div>
+          <div class="criteria-stat-label">設定駅数</div>
+        </div>
+        <div class="criteria-stat">
+          <div class="criteria-stat-value">8</div>
+          <div class="criteria-stat-label">配信件数</div>
+        </div>
+        <div class="criteria-stat">
+          <div class="criteria-stat-value">25%</div>
+          <div class="criteria-stat-label">興味あり率</div>
+        </div>
+        <div class="criteria-stat">
+          <div class="criteria-stat-value">0</div>
+          <div class="criteria-stat-label">内見済</div>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn btn-outline" style="margin-top:var(--space-sm);">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      新しい条件を追加
+    </button>
+  </div>
+</div>
+
+<!-- ============================================================
+     PAGE 10B: CRITERIA DETAIL
+     ============================================================ -->
+<div id="page-criteria-detail" class="page">
+  <div class="header">
+    <button class="header-back" onclick="navigateTo('criteria')">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M12.5 15L7.5 10L12.5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <div class="header-title">渋谷・六本木 飲食</div>
+  </div>
+  <div class="cd-body">
+    <!-- 30日間の状況 -->
+    <div class="cd-period-header">直近30日間の状況</div>
+
+    <!-- 配信済み -->
+    <div class="cd-summary">
+      <div class="cd-section-label">配信済み</div>
+      <div class="cd-headline">
+        <div class="cd-headline-num">24</div>
+        <div class="cd-headline-unit">件</div>
+      </div>
+    </div>
+
+    <!-- 内訳 -->
+    <div class="cd-summary" style="padding-top:0;">
+      <div class="cd-section-label">内訳</div>
+      <div class="cd-bar-wrap">
+        <div class="cd-bar">
+          <div class="cd-bar-seg yes" style="width:37.5%;"></div>
+          <div class="cd-bar-seg no" style="width:45.8%;"></div>
+          <div class="cd-bar-seg pending" style="width:16.7%;"></div>
+        </div>
+      </div>
+      <div class="cd-legend">
+        <div class="cd-legend-item">
+          <div class="cd-legend-dot yes"></div>
+          <div>
+            <div class="cd-legend-num">9</div>
+            <div class="cd-legend-label">興味あり</div>
+          </div>
+        </div>
+        <div class="cd-legend-item">
+          <div class="cd-legend-dot no"></div>
+          <div>
+            <div class="cd-legend-num">11</div>
+            <div class="cd-legend-label">興味なし</div>
+          </div>
+        </div>
+        <div class="cd-legend-item">
+          <div class="cd-legend-dot pending"></div>
+          <div>
+            <div class="cd-legend-num">4</div>
+            <div class="cd-legend-label">未仕分け</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 内見済・調整中 -->
+    <div class="cd-action-row">
+      <div class="cd-action-card">
+        <div class="cd-action-value">3</div>
+        <div class="cd-action-label">内見済</div>
+      </div>
+      <div class="cd-action-card">
+        <div class="cd-action-value">2</div>
+        <div class="cd-action-label">調整中</div>
+      </div>
+    </div>
+
+    <!-- 30日間の配信数推移 -->
+    <div class="cd-chart-area">
+      <div class="cd-chart-label">配信数の推移</div>
+      <div class="cd-chart cd-chart-30d" id="cd-chart"></div>
+      <div class="cd-chart-axis" id="cd-chart-axis"></div>
+    </div>
+
+    <!-- Condition details -->
+    <div class="cd-section">
+      <div class="cd-section-title">条件設定</div>
+      <div class="cd-detail-grid">
+        <div class="cd-detail-item full-width">
+          <div class="cd-detail-label">業態</div>
+          <div class="cd-detail-value">ヘビー飲食、軽飲食</div>
+        </div>
+        <div class="cd-detail-item">
+          <div class="cd-detail-label">設定駅数</div>
+          <div class="cd-detail-value">6駅</div>
+        </div>
+        <div class="cd-detail-item">
+          <div class="cd-detail-label">徒歩</div>
+          <div class="cd-detail-value">10分以内</div>
+        </div>
+        <div class="cd-detail-item">
+          <div class="cd-detail-label">坪数</div>
+          <div class="cd-detail-value">20〜100坪</div>
+        </div>
+        <div class="cd-detail-item">
+          <div class="cd-detail-label">階数</div>
+          <div class="cd-detail-value">1F</div>
+        </div>
+        <div class="cd-detail-item">
+          <div class="cd-detail-label">坪賃料上限</div>
+          <div class="cd-detail-value">25,000円/坪</div>
+        </div>
+        <div class="cd-detail-item">
+          <div class="cd-detail-label">初期費用上限</div>
+          <div class="cd-detail-value">500万円</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="cd-actions">
+      <button class="btn btn-outline" onclick="navigateTo('criteria-biz')">条件を編集</button>
+      <button class="btn btn-ghost btn-danger-outline">停止する</button>
+    </div>
+
+    <!-- Status info -->
+    <div style="padding:var(--space-lg);text-align:center;">
+      <div style="font-size:var(--text-xs);color:var(--text-tertiary);">2026年2月18日 作成 ・ ステータス: <span style="color:var(--accent-dark);font-weight:600;">有効</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     DETAIL SHEET OVERLAY (Tinder-style pull-up)
+     ============================================================ -->
+<div class="detail-sheet-overlay" id="detail-sheet-overlay">
+  <div class="detail-sheet-backdrop" onclick="closeDetailSheet()"></div>
+  <div class="detail-sheet" id="detail-sheet">
+    <div class="detail-sheet-handle" onclick="closeDetailSheet()">
+      <div class="detail-sheet-handle-bar"></div>
+    </div>
+    <button class="detail-sheet-close" onclick="closeDetailSheet()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+    <div class="detail-sheet-scroll" id="detail-sheet-scroll">
+
+      <!-- Hero with overlay -->
+      <div class="ds-hero-card" id="ds-hero">
+        <div class="ds-hero-overlay">
+          <div class="ds-hero-name" id="ds-name"></div>
+          <div class="ds-hero-station"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg><span id="ds-station"></span></div>
+        </div>
+      </div>
+
+      <!-- Key numbers -->
+      <div class="ds-key-bar">
+        <div class="ds-key-item">
+          <div class="ds-key-label">坪数</div>
+          <div class="ds-key-value" id="ds-area"></div>
+        </div>
+        <div class="ds-key-item">
+          <div class="ds-key-label">階数</div>
+          <div class="ds-key-value" id="ds-floor"></div>
+        </div>
+        <div class="ds-key-item accent">
+          <div class="ds-key-label">月額賃料</div>
+          <div class="ds-key-value" id="ds-rent"></div>
+        </div>
+      </div>
+
+      <!-- Property info table -->
+      <div class="ds-card">
+        <div class="ds-card-title">物件情報</div>
+        <table class="ds-table">
+          <tr><td class="ds-td-label">坪賃料</td><td class="ds-td-value" id="ds-tsubo-rent"></td></tr>
+          <tr><td class="ds-td-label">初期費用</td><td class="ds-td-value">応相談</td></tr>
+          <tr><td class="ds-td-label">敷金</td><td class="ds-td-value">12ヶ月</td></tr>
+          <tr><td class="ds-td-label">礼金</td><td class="ds-td-value">なし</td></tr>
+          <tr><td class="ds-td-label">管理費</td><td class="ds-td-value">30,000円/月</td></tr>
+        </table>
+      </div>
+
+      <!-- Equipment info table -->
+      <div class="ds-card">
+        <div class="ds-card-title">設備情報</div>
+        <table class="ds-table">
+          <tr><td class="ds-td-label">状態</td><td class="ds-td-value">スケルトン</td></tr>
+          <tr><td class="ds-td-label">給排水</td><td class="ds-td-value">あり</td></tr>
+          <tr><td class="ds-td-label">トイレ</td><td class="ds-td-value">専用</td></tr>
+          <tr><td class="ds-td-label">エアコン</td><td class="ds-td-value">個別空調</td></tr>
+          <tr><td class="ds-td-label">ダクト</td><td class="ds-td-value">設置可</td></tr>
+          <tr><td class="ds-td-label">天井高</td><td class="ds-td-value">3.2m</td></tr>
+        </table>
+      </div>
+
+      <!-- Business types (hierarchical) -->
+      <div class="ds-card" id="ds-biz-card">
+        <div class="ds-card-title">出店可能業態</div>
+      </div>
+
+      <div style="height:8px;"></div>
+    </div>
+    <div class="detail-sheet-cta">
+      <button class="btn btn-primary" onclick="detailSheetLike()">気になる</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     VIEWING REQUEST SHEET
+     ============================================================ -->
+<div class="vr-sheet-overlay" id="vr-sheet-overlay">
+  <div class="vr-sheet-backdrop" onclick="closeViewingRequest()"></div>
+  <div class="vr-sheet">
+    <div class="vr-sheet-handle" onclick="closeViewingRequest()">
+      <div class="vr-sheet-handle-bar"></div>
+    </div>
+    <div class="vr-sheet-header">
+      <div class="vr-sheet-title">内見リクエスト</div>
+      <button class="vr-sheet-close" onclick="closeViewingRequest()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="vr-sheet-scroll" id="vr-sheet-scroll">
+      <!-- Selected properties -->
+      <div class="vr-section-label">対象物件</div>
+      <div class="vr-props" id="vr-props"></div>
+
+      <!-- Date picker -->
+      <div class="vr-section-label">ご都合の良い日を選択</div>
+      <div class="vr-date-scroll" id="vr-date-scroll"></div>
+
+      <!-- Selected slots -->
+      <div class="vr-slots" id="vr-slots"></div>
+
+      <!-- Notes -->
+      <div class="vr-notes">
+        <div class="vr-section-label">備考</div>
+        <textarea placeholder="ご質問やご要望があればご記入ください"></textarea>
+      </div>
+    </div>
+    <div class="vr-cta">
+      <button class="btn btn-primary" id="vr-submit-btn" onclick="submitViewingRequest()">内見をリクエスト</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     BOTTOM NAV
+     ============================================================ -->
+<div id="bottom-nav">
+  <button class="nav-item active" data-page="dashboard" onclick="navigateTo('dashboard')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    <span>ホーム</span>
+    <span class="nav-badge visible" id="nav-badge-swipe">7</span>
+  </button>
+  <button class="nav-item" data-page="interested" onclick="navigateTo('interested')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+    <span>興味あり</span>
+    <span class="nav-badge" id="nav-badge-interested"></span>
+  </button>
+  <button class="nav-item" data-page="viewings" onclick="navigateTo('viewings')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    <span>内見</span>
+    <span class="nav-badge" id="nav-badge-viewings"></span>
+  </button>
+  <button class="nav-item" data-page="criteria" onclick="navigateTo('criteria')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+    <span>条件</span>
+  </button>
+</div>
+
+</div><!-- /#app -->
+
+<div class="toast" id="toast"></div>
+
+<!-- ================================================================
+     JAVASCRIPT
+     ================================================================ -->
+<script>
+/* =================================================================
+   PROPERTY DATA
+   ================================================================= */
+// Photo types: 'img' = real image, 'grad' = CSS gradient placeholder
+function ph(type, src, label) { return { type: type, src: src, label: label }; }
+var G1 = 'linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 50%, #a5b4fc 100%)';
+var G2 = 'linear-gradient(135deg, #fce7f3 0%, #fbcfe8 50%, #f9a8d4 100%)';
+var G3 = 'linear-gradient(135deg, #d1fae5 0%, #a7f3d0 50%, #6ee7b7 100%)';
+var G4 = 'linear-gradient(135deg, #fef3c7 0%, #fde68a 50%, #fbbf24 100%)';
+
+// Business type master (category → items) - matches criteria-biz screen
+var bizCategories = [
+  { cat: '飲食', items: ['ヘビー飲食', '軽飲食', 'バー・クラブ', 'スナック'] },
+  { cat: '美容', items: ['美容室・理容室', 'ネイルサロン', 'まつげサロン', 'エステサロン', 'リラクゼーション'] },
+  { cat: 'ジム', items: ['フィットネス', 'ゴルフスクール', '道場・スポーツ教室'] },
+  { cat: '娯楽', items: ['カラオケ', '漫画カフェ', 'ゲームセンター', 'パチンコ'] },
+  { cat: 'その他', items: ['物販', '医療施設', '学習塾・教室', 'サービス業'] }
+];
+
+// daysAgo: 配信からの経過日数 (0=今日, 1=1日前, ... 4以上=スキップ)
+// status: 'pending'=未仕分け
+var properties = [
+  // 今日配信 (4件)
+  { id:1, name:'渋谷区神南一丁目 商業ビル用地', station:'渋谷駅', walk:'5分', area:'45.2坪', floor:'1F', rent:'350万円', condition:'スケルトン', daysAgo:0, status:'pending',
+    photos:[ph('img','building1/map1.PNG','地図'), ph('img','building1/IMG_1740.PNG','外観'), ph('img','building1/IMG_1741.PNG','内装'), ph('img','building1/IMG_1742.PNG','間取り')],
+    bizOk:['レストラン','カフェ','バー・居酒屋','テイクアウト','アパレル','雑貨','美容院','エステ・ネイル'],
+    bizTypes:{'ヘビー飲食':'ok','軽飲食':'ok','バー・クラブ':'ok','スナック':'ng','美容室・理容室':'ok','ネイルサロン':'ok','まつげサロン':'ok','エステサロン':'ok','リラクゼーション':'unknown','フィットネス':'ng','ゴルフスクール':'ng','道場・スポーツ教室':'ng','カラオケ':'ng','漫画カフェ':'ng','ゲームセンター':'ng','パチンコ':'ng','物販':'ok','医療施設':'ng','学習塾・教室':'ok','サービス業':'ok'} },
+  { id:2, name:'港区六本木三丁目 オフィスビル', station:'六本木駅', walk:'3分', area:'62.8坪', floor:'2F', rent:'520万円', condition:'事務所仕様', daysAgo:0, status:'pending',
+    photos:[ph('img','building2/map2.PNG','地図'), ph('img','building2/IMG_1744.PNG','外観'), ph('img','building2/IMG_1745.PNG','内装'), ph('img','building2/IMG_1746.PNG','間取り')],
+    bizOk:['レストラン','カフェ','バー・居酒屋','アパレル','雑貨','クリニック','オフィス','コワーキング','ショールーム'],
+    bizTypes:{'ヘビー飲食':'ng','軽飲食':'ok','バー・クラブ':'ng','スナック':'ng','美容室・理容室':'ok','ネイルサロン':'ok','まつげサロン':'ok','エステサロン':'ok','リラクゼーション':'ok','フィットネス':'ok','ゴルフスクール':'ng','道場・スポーツ教室':'ng','カラオケ':'ng','漫画カフェ':'ng','ゲームセンター':'ng','パチンコ':'ng','物販':'ok','医療施設':'ok','学習塾・教室':'ok','サービス業':'ok'} },
+  { id:3, name:'新宿区歌舞伎町二丁目 店舗用地', station:'新宿駅', walk:'8分', area:'28.5坪', floor:'1F', rent:'180万円', condition:'居抜き', daysAgo:0, status:'pending',
+    photos:[ph('img','building3/map3.PNG','地図'), ph('img','building3/IMG_1748.PNG','外観'), ph('img','building3/IMG_1749.PNG','内装'), ph('img','building3/IMG_1750.PNG','間取り')],
+    bizOk:['レストラン','カフェ','バー・居酒屋','ファストフード','テイクアウト','美容院'],
+    bizTypes:{'ヘビー飲食':'ok','軽飲食':'ok','バー・クラブ':'ok','スナック':'ok','美容室・理容室':'ok','ネイルサロン':'ok','まつげサロン':'ok','エステサロン':'ng','リラクゼーション':'ng','フィットネス':'ng','ゴルフスクール':'ng','道場・スポーツ教室':'ng','カラオケ':'ok','漫画カフェ':'ng','ゲームセンター':'ng','パチンコ':'ng','物販':'ok','医療施設':'ng','学習塾・教室':'ng','サービス業':'ok'} },
+  { id:4, name:'中央区銀座六丁目 商業施設', station:'銀座駅', walk:'2分', area:'85.0坪', floor:'B1F', rent:'680万円', condition:'内装リク', daysAgo:0, status:'pending',
+    photos:[ph('img','building1/map1.PNG','地図'), ph('img','building1/IMG_1740.PNG','外観'), ph('img','building1/IMG_1741.PNG','内装'), ph('img','building1/IMG_1742.PNG','間取り')],
+    bizOk:['レストラン','カフェ','アパレル','雑貨','コンビニ','ドラッグストア','エステ・ネイル','クリニック','ショールーム'],
+    bizTypes:{'ヘビー飲食':'ng','軽飲食':'ok','バー・クラブ':'ok','スナック':'ng','美容室・理容室':'ok','ネイルサロン':'ok','まつげサロン':'ok','エステサロン':'ok','リラクゼーション':'ok','フィットネス':'ok','ゴルフスクール':'ok','道場・スポーツ教室':'ng','カラオケ':'ng','漫画カフェ':'ng','ゲームセンター':'ng','パチンコ':'ng','物販':'ok','医療施設':'ok','学習塾・教室':'ok','サービス業':'ok'} },
+  // 1日前配信 (3件)
+  { id:5, name:'千代田区丸の内一丁目 複合ビル', station:'東京駅', walk:'1分', area:'120.5坪', floor:'5F', rent:'980万円', condition:'事務所仕様', daysAgo:1, status:'pending',
+    photos:[ph('img','building2/map2.PNG','地図'), ph('img','building2/IMG_1744.PNG','外観'), ph('img','building2/IMG_1745.PNG','内装'), ph('img','building2/IMG_1746.PNG','間取り')],
+    bizOk:['レストラン','カフェ','アパレル','オフィス','コワーキング','ショールーム','フィットネス'],
+    bizTypes:{'ヘビー飲食':'ng','軽飲食':'ok','バー・クラブ':'ng','スナック':'ng','美容室・理容室':'unknown','ネイルサロン':'unknown','まつげサロン':'unknown','エステサロン':'unknown','リラクゼーション':'ng','フィットネス':'ok','ゴルフスクール':'ok','道場・スポーツ教室':'ok','カラオケ':'ng','漫画カフェ':'ng','ゲームセンター':'ng','パチンコ':'ng','物販':'ok','医療施設':'ok','学習塾・教室':'ok','サービス業':'ok'} },
+  { id:6, name:'目黒区自由が丘二丁目 店舗', station:'自由が丘駅', walk:'4分', area:'32.0坪', floor:'1F', rent:'150万円', condition:'居抜き', daysAgo:1, status:'pending',
+    photos:[ph('img','building3/map3.PNG','地図'), ph('img','building3/IMG_1748.PNG','外観'), ph('img','building3/IMG_1749.PNG','内装'), ph('img','building3/IMG_1750.PNG','間取り')],
+    bizOk:['レストラン','カフェ','テイクアウト','アパレル','雑貨','美容院','エステ・ネイル'],
+    bizTypes:{'ヘビー飲食':'ng','軽飲食':'ok','バー・クラブ':'ng','スナック':'ng','美容室・理容室':'ok','ネイルサロン':'ok','まつげサロン':'ok','エステサロン':'ok','リラクゼーション':'ok','フィットネス':'ng','ゴルフスクール':'ng','道場・スポーツ教室':'ng','カラオケ':'ng','漫画カフェ':'ng','ゲームセンター':'ng','パチンコ':'ng','物販':'ok','医療施設':'ok','学習塾・教室':'ok','サービス業':'ok'} },
+  { id:7, name:'渋谷区恵比寿一丁目 飲食ビル', station:'恵比寿駅', walk:'2分', area:'25.3坪', floor:'3F', rent:'55万円', condition:'スケルトン', daysAgo:1, status:'pending',
+    photos:[ph('img','building1/map1.PNG','地図'), ph('img','building1/IMG_1740.PNG','外観'), ph('img','building1/IMG_1741.PNG','内装'), ph('img','building1/IMG_1742.PNG','間取り')],
+    bizOk:['レストラン','カフェ','バー・居酒屋','ファストフード','テイクアウト'],
+    bizTypes:{'ヘビー飲食':'ok','軽飲食':'ok','バー・クラブ':'ok','スナック':'ok','美容室・理容室':'ng','ネイルサロン':'ng','まつげサロン':'ng','エステサロン':'ng','リラクゼーション':'ng','フィットネス':'ng','ゴルフスクール':'ng','道場・スポーツ教室':'ng','カラオケ':'ng','漫画カフェ':'ng','ゲームセンター':'ng','パチンコ':'ng','物販':'ng','医療施設':'ng','学習塾・教室':'ng','サービス業':'ng'} }
+];
+// Sort by age descending (古い順=期限が近い順にスワイプ)
+properties.sort(function(a, b) { return b.daysAgo - a.daysAgo; });
+
+// swipeQueue = all pending properties (expired are in skippedHistory)
+var swipeQueue = properties.slice();
+
+// 直近30日のスキップ済み物件 (4日以上経過で自動スキップ)
+var skippedHistory = [
+  { id:8,   name:'品川区五反田二丁目 路面店',       station:'五反田駅',     walk:'3分', area:'18.7坪', rent:'42万円',  daysAgo:5 },
+  { id:101, name:'台東区浅草一丁目 店舗',           station:'浅草駅',       walk:'3分', area:'22.5坪', rent:'65万円',  daysAgo:7 },
+  { id:102, name:'豊島区池袋二丁目 商業ビル',       station:'池袋駅',       walk:'5分', area:'48.0坪', rent:'280万円', daysAgo:10 },
+  { id:103, name:'世田谷区三軒茶屋一丁目 路面店',   station:'三軒茶屋駅',   walk:'2分', area:'15.8坪', rent:'38万円',  daysAgo:14 },
+  { id:104, name:'文京区本郷三丁目 オフィス',       station:'本郷三丁目駅', walk:'1分', area:'35.2坪', rent:'120万円', daysAgo:19 },
+  { id:105, name:'杉並区高円寺南三丁目 店舗',       station:'高円寺駅',     walk:'4分', area:'20.0坪', rent:'42万円',  daysAgo:24 },
+  { id:106, name:'北区赤羽一丁目 飲食ビル',         station:'赤羽駅',       walk:'2分', area:'28.3坪', rent:'75万円',  daysAgo:28 }
+];
+var skippedCount = skippedHistory.length;
+// Track photo index per card
+var cardPhotoIndex = {};
+
+/* =================================================================
+   STATE
+   ================================================================= */
+var currentIndex = 0;
+var swipeHistory = [];
+var yesCount = 0;
+var noCount = 0;
+var interestedProperties = [];
+var detailReturnPage = 'swipe';
+
+// Swipe engine state
+var isDragging = false;
+var startX = 0;
+var startY = 0;
+var startTime = 0;
+var currentDeltaX = 0;
+var isAnimating = false;
+var cardEl = null;
+var lockedAxis = null; // 'h' or 'v' or null
+
+var onboardingPages = ['welcome', 'register', 'guide', 'criteria-biz', 'criteria-area', 'criteria-specs', 'tutorial'];
+var pageOrder = ['welcome', 'register', 'guide', 'criteria-biz', 'criteria-area', 'criteria-specs', 'tutorial', 'dashboard', 'swipe', 'swipe-complete', 'skipped', 'property-detail', 'interested', 'viewings', 'viewing-detail', 'criteria', 'criteria-detail'];
+var currentPage = 'welcome';
+
+/* =================================================================
+   NAVIGATION
+   ================================================================= */
+function navigateTo(page) {
+  var prevPage = currentPage;
+
+  // Hide all pages
+  var pages = document.querySelectorAll('.page');
+  for (var i = 0; i < pages.length; i++) {
+    pages[i].classList.remove('active', 'slide-in', 'slide-back');
+  }
+
+  // Show target with animation
+  var target = document.getElementById('page-' + page);
+  if (target) {
+    target.classList.add('active');
+
+    // Add slide animation (skip for welcome and swipe to avoid jank)
+    if (prevPage !== page && page !== 'welcome') {
+      var prevIdx = pageOrder.indexOf(prevPage);
+      var nextIdx = pageOrder.indexOf(page);
+      if (nextIdx > prevIdx) {
+        target.classList.add('slide-in');
+      } else {
+        target.classList.add('slide-back');
+      }
+    }
+
+    // Reset scroll on the scrollable area
+    var scrollable = target.querySelector('.detail-scroll, .list-body, .viewings-body, .criteria-body, .form-page-body, .dash-body, .vd-body');
+    if (scrollable) scrollable.scrollTop = 0;
+  }
+
+  currentPage = page;
+
+  // Bottom nav - hide on onboarding AND swipe pages
+  var nav = document.getElementById('bottom-nav');
+  var hideNav = onboardingPages.indexOf(page) !== -1 || page === 'swipe';
+  if (hideNav) {
+    nav.classList.remove('visible');
+  } else {
+    nav.classList.add('visible');
+  }
+
+  // Update nav active state
+  // Map sub-pages to their parent nav tab
+  var navMap = { 'dashboard': 'dashboard', 'swipe': 'dashboard', 'swipe-complete': 'dashboard', 'skipped': 'dashboard',
+    'property-detail': null, 'viewing-detail': 'viewings', 'criteria-detail': 'criteria' };
+  var navPage = navMap[page] !== undefined ? navMap[page] : page;
+  var navItems = document.querySelectorAll('.nav-item');
+  for (var i = 0; i < navItems.length; i++) {
+    navItems[i].classList.toggle('active', navItems[i].getAttribute('data-page') === navPage);
+  }
+
+  // Swipe actions
+  document.getElementById('swipe-actions').style.display = (page === 'swipe') ? 'flex' : 'none';
+
+  // Render cards when entering swipe
+  if (page === 'swipe') {
+    renderCards();
+  }
+
+  // Render interested list
+  if (page === 'interested') {
+    renderInterestedList();
+  }
+
+  // Render criteria chart
+  if (page === 'criteria-detail') {
+    renderCriteriaChart();
+  }
+
+  // Render skipped list
+  if (page === 'skipped') {
+    renderSkippedList();
+  }
+
+  // Update nav badges
+  updateNavBadges();
+}
+
+function updateNavBadges() {
+  // Count remaining pending properties by day
+  var remaining = swipeQueue.length - currentIndex;
+  var dayCounts = [0, 0, 0, 0]; // [今日, 1日前, 2日前, 3日前]
+  for (var i = currentIndex; i < swipeQueue.length; i++) {
+    var da = swipeQueue[i].daysAgo;
+    if (da >= 0 && da <= 3) dayCounts[da]++;
+  }
+
+  // Swipe badge
+  var swipeBadge = document.getElementById('nav-badge-swipe');
+  if (remaining > 0) {
+    swipeBadge.textContent = remaining;
+    swipeBadge.classList.add('visible');
+  } else {
+    swipeBadge.classList.remove('visible');
+  }
+
+  // Update dashboard CTA
+  var ctaNum = document.getElementById('dash-cta-num');
+  if (ctaNum) ctaNum.innerHTML = remaining + ' <span>件</span>';
+
+  // Update day-based breakdown counts
+  var d0 = document.getElementById('cta-day0-count');
+  var d1 = document.getElementById('cta-day1-count');
+  var d2 = document.getElementById('cta-day2-count');
+  var d3 = document.getElementById('cta-day3-count');
+  if (d0) d0.textContent = dayCounts[0];
+  if (d1) d1.textContent = dayCounts[1];
+  if (d2) d2.textContent = dayCounts[2];
+  if (d3) d3.textContent = dayCounts[3];
+
+  // Update expired count
+  var ec = document.getElementById('cta-expired-count');
+  if (ec) ec.textContent = skippedCount;
+  var expiredWrap = document.getElementById('dash-cta-expired');
+  if (expiredWrap) expiredWrap.style.display = skippedCount > 0 ? '' : 'none';
+
+  // Interested badge
+  var intCount = interestedProperties.length || 5;
+  var intBadge = document.getElementById('nav-badge-interested');
+  if (intCount > 0) {
+    intBadge.textContent = intCount;
+    intBadge.classList.add('visible');
+  } else {
+    intBadge.classList.remove('visible');
+  }
+
+  // Viewings badge (調整中)
+  var viewBadge = document.getElementById('nav-badge-viewings');
+  viewBadge.textContent = '2';
+  viewBadge.classList.add('visible');
+}
+
+/* =================================================================
+   FORM HELPERS
+   ================================================================= */
+function toggleCheck(el) {
+  el.classList.toggle('checked');
+  var icon = el.querySelector('.check-icon');
+  if (el.classList.contains('checked')) {
+    icon.innerHTML = '<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6L5 9L10 3" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  } else {
+    icon.innerHTML = '';
+  }
+}
+
+function selectRadio(el) {
+  var siblings = el.parentElement.querySelectorAll('.radio-item');
+  for (var i = 0; i < siblings.length; i++) siblings[i].classList.remove('selected');
+  el.classList.add('selected');
+}
+
+/* =================================================================
+   TOAST NOTIFICATION
+   ================================================================= */
+function showToast(msg, duration) {
+  duration = duration || 2000;
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(function() { t.classList.remove('show'); }, duration);
+}
+
+/* =================================================================
+   TAB SWITCHING
+   ================================================================= */
+function switchTab(el, group) {
+  // Toggle active class on tab buttons
+  var bar = el.parentElement;
+  var tabs = bar.querySelectorAll('.tab-item');
+  for (var i = 0; i < tabs.length; i++) tabs[i].classList.remove('active');
+  el.classList.add('active');
+
+  // Show/hide tab content
+  var targetId = el.getAttribute('data-tab');
+  if (group === 'interested') {
+    document.getElementById('interested-list').style.display = '';
+  }
+  if (group === 'viewings') {
+    document.getElementById('viewings-pending').style.display = (targetId === 'viewings-pending') ? '' : 'none';
+    document.getElementById('viewings-upcoming').style.display = (targetId === 'viewings-upcoming') ? '' : 'none';
+    document.getElementById('viewings-done').style.display = (targetId === 'viewings-done') ? '' : 'none';
+  }
+}
+
+/* =================================================================
+   CARD RENDERING
+   ================================================================= */
+function renderCards() {
+  var stack = document.getElementById('card-stack');
+  stack.innerHTML = '';
+
+  if (currentIndex >= swipeQueue.length) {
+    document.getElementById('complete-yes').textContent = yesCount;
+    document.getElementById('complete-no').textContent = noCount;
+    // Show skipped count
+    if (skippedCount > 0) {
+      document.getElementById('complete-skip').textContent = skippedCount;
+      document.getElementById('complete-skip-wrap').style.display = '';
+    }
+    navigateTo('swipe-complete');
+    return;
+  }
+
+  // Update progress
+  document.getElementById('swipe-progress-text').textContent = (currentIndex + 1) + ' / ' + swipeQueue.length;
+  document.getElementById('swipe-progress-fill').style.width = ((currentIndex + 1) / swipeQueue.length * 100) + '%';
+
+  // Background card 2
+  if (currentIndex + 2 < swipeQueue.length) {
+    stack.appendChild(buildCard(swipeQueue[currentIndex + 2], 'card-bg-2'));
+  }
+  // Background card 1
+  if (currentIndex + 1 < swipeQueue.length) {
+    stack.appendChild(buildCard(swipeQueue[currentIndex + 1], 'card-bg-1'));
+  }
+  // Main card
+  var main = buildCard(swipeQueue[currentIndex], 'card-main');
+  stack.appendChild(main);
+  cardEl = main;
+  attachSwipe(main);
+}
+
+function buildCard(prop, cls) {
+  var card = document.createElement('div');
+  card.className = 'swipe-card ' + cls;
+  card.setAttribute('data-prop-id', prop.id);
+
+  // Photo dots
+  var dotsHTML = '<div class="card-photo-dots">';
+  for (var i = 0; i < prop.photos.length; i++) {
+    dotsHTML += '<div class="card-photo-dot' + (i === 0 ? ' active' : '') + '"></div>';
+  }
+  dotsHTML += '</div>';
+
+  // First photo
+  var photo = prop.photos[0];
+  var photoHTML = photo.type === 'img'
+    ? '<img src="' + photo.src + '" alt="" draggable="false">'
+    : '<div style="width:100%;height:100%;background:' + photo.src + ';display:flex;align-items:center;justify-content:center;"><span style="font-size:48px;opacity:0.6;">🏢</span></div>';
+
+  // Day-based badge
+  var badgeHTML = '';
+  if (prop.daysAgo === 0) {
+    badgeHTML = '<span class="card-badge-deadline card-badge-fresh">今日</span>';
+  } else if (prop.daysAgo === 1) {
+    badgeHTML = '<span class="card-badge-deadline card-badge-day1">1日前</span>';
+  } else if (prop.daysAgo === 2) {
+    badgeHTML = '<span class="card-badge-deadline card-badge-warning">2日前</span>';
+  } else {
+    badgeHTML = '<span class="card-badge-deadline card-badge-urgent">3日前</span>';
+  }
+
+  card.innerHTML =
+    '<div class="card-image-area" onclick="tapCardImage(event,' + prop.id + ')">' +
+      dotsHTML + photoHTML + badgeHTML +
+      '<div class="stamp stamp-yes">興味あり</div>' +
+      '<div class="stamp stamp-no">興味なし</div>' +
+    '</div>' +
+    '<div class="card-info">' +
+      '<div class="card-info-name">' + prop.name + '</div>' +
+      '<div class="card-info-line2">🚉 ' + prop.station + '  徒歩' + prop.walk + '</div>' +
+      '<div class="card-info-line3">' + prop.area + '  ' + prop.floor + '  💰 ' + prop.rent + '</div>' +
+    '</div>' +
+    '';
+
+  // Init photo index
+  cardPhotoIndex[prop.id] = 0;
+
+  return card;
+}
+
+/* =================================================================
+   PHOTO TAP TO CYCLE
+   ================================================================= */
+function tapCardImage(e, propId) {
+  // Don't cycle if user was dragging
+  if (Math.abs(currentDeltaX) > 5) return;
+
+  var prop = null;
+  for (var i = 0; i < properties.length; i++) {
+    if (properties[i].id === propId) { prop = properties[i]; break; }
+  }
+  if (!prop) return;
+
+  // Determine left/right tap
+  var rect = e.currentTarget.getBoundingClientRect();
+  var tapX = (e.clientX || (e.touches && e.touches[0].clientX) || 0) - rect.left;
+  var isRight = tapX > rect.width / 2;
+
+  var idx = cardPhotoIndex[propId] || 0;
+  if (isRight) {
+    idx = (idx + 1) % prop.photos.length;
+  } else {
+    idx = (idx - 1 + prop.photos.length) % prop.photos.length;
+  }
+  cardPhotoIndex[propId] = idx;
+
+  // Update image
+  var card = e.currentTarget.closest('.swipe-card');
+  var imageArea = card.querySelector('.card-image-area');
+  var photo = prop.photos[idx];
+
+  // Update photo content (keep stamps, dots, badge, label)
+  var existingImg = imageArea.querySelector('img');
+  var existingGrad = imageArea.querySelector('div[style*="background:linear"]');
+  if (existingImg) existingImg.remove();
+  if (existingGrad) existingGrad.remove();
+
+  var newEl;
+  if (photo.type === 'img') {
+    newEl = document.createElement('img');
+    newEl.src = photo.src;
+    newEl.alt = '';
+    newEl.draggable = false;
+  } else {
+    newEl = document.createElement('div');
+    newEl.style.cssText = 'width:100%;height:100%;background:' + photo.src + ';display:flex;align-items:center;justify-content:center;position:absolute;top:0;left:0;';
+    newEl.innerHTML = '<span style="font-size:48px;opacity:0.6;">🏢</span>';
+  }
+  // Crossfade animation
+  newEl.classList.add('photo-fade-enter');
+  // Insert after dots
+  var dots = imageArea.querySelector('.card-photo-dots');
+  if (dots && dots.nextSibling) {
+    imageArea.insertBefore(newEl, dots.nextSibling);
+  } else {
+    imageArea.appendChild(newEl);
+  }
+
+  // Update dots
+  var allDots = imageArea.querySelectorAll('.card-photo-dot');
+  for (var d = 0; d < allDots.length; d++) {
+    allDots[d].classList.toggle('active', d === idx);
+  }
+
+  // Update label
+  var labelEl = imageArea.querySelector('div[style*="bottom:8px"]');
+  if (labelEl) labelEl.textContent = photo.label;
+}
+
+/* =================================================================
+   SWIPE ENGINE
+   ================================================================= */
+function attachSwipe(card) {
+  card.addEventListener('touchstart', onStart, { passive: false });
+  card.addEventListener('touchmove', onMove, { passive: false });
+  card.addEventListener('touchend', onEnd, { passive: false });
+  card.addEventListener('touchcancel', onEnd, { passive: false });
+  card.addEventListener('mousedown', onStart);
+}
+
+function getClientX(e) { return e.touches ? e.touches[0].clientX : e.clientX; }
+function getClientY(e) { return e.touches ? e.touches[0].clientY : e.clientY; }
+
+function onStart(e) {
+  if (isAnimating) return;
+  isDragging = true;
+  lockedAxis = null;
+  startX = getClientX(e);
+  startY = getClientY(e);
+  startTime = Date.now();
+  currentDeltaX = 0;
+
+  cardEl.style.transition = 'none';
+  cardEl.classList.add('dragging');
+
+  if (!e.touches) {
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onEnd);
+  }
+}
+
+function onMove(e) {
+  if (!isDragging || isAnimating) return;
+
+  var cx = getClientX(e);
+  var cy = getClientY(e);
+  var dx = cx - startX;
+  var dy = cy - startY;
+
+  // Axis locking: determine primary axis on first significant movement
+  if (!lockedAxis) {
+    if (Math.abs(dx) < 5 && Math.abs(dy) < 5) return; // dead zone
+    lockedAxis = Math.abs(dx) >= Math.abs(dy) ? 'h' : 'v';
+  }
+
+  // If vertical axis locked, let the browser scroll
+  if (lockedAxis === 'v') return;
+
+  // Horizontal: prevent scrolling and move card
+  if (e.cancelable) e.preventDefault();
+
+  currentDeltaX = dx;
+  var rotate = dx * 0.05;
+  cardEl.style.transform = 'translateX(' + dx + 'px) rotate(' + rotate + 'deg)';
+
+  // Stamp opacity
+  var sYes = cardEl.querySelector('.stamp-yes');
+  var sNo = cardEl.querySelector('.stamp-no');
+  if (dx > 30) {
+    sYes.style.opacity = Math.min((dx - 30) / 80, 0.95);
+    sNo.style.opacity = 0;
+  } else if (dx < -30) {
+    sNo.style.opacity = Math.min((Math.abs(dx) - 30) / 80, 0.95);
+    sYes.style.opacity = 0;
+  } else {
+    sYes.style.opacity = 0;
+    sNo.style.opacity = 0;
+  }
+
+  // Background card scale feedback - grow as main card moves away
+  var bgCard1 = document.querySelector('.swipe-card.card-bg-1');
+  if (bgCard1) {
+    var progress = Math.min(Math.abs(dx) / 150, 1);
+    var scale = 0.975 + 0.025 * progress;
+    var ty = 4 - 4 * progress;
+    bgCard1.style.transition = 'none';
+    bgCard1.style.transform = 'scale(' + scale + ') translateY(' + ty + 'px)';
+  }
+}
+
+function onEnd(e) {
+  if (!isDragging) return;
+  isDragging = false;
+  lockedAxis = null;
+  cardEl.classList.remove('dragging');
+
+  document.removeEventListener('mousemove', onMove);
+  document.removeEventListener('mouseup', onEnd);
+
+  var elapsed = Date.now() - startTime;
+  var velocity = elapsed > 0 ? Math.abs(currentDeltaX) / (elapsed / 1000) : 0;
+
+  if (Math.abs(currentDeltaX) > 100 || velocity > 800) {
+    var dir = currentDeltaX > 0 ? 'yes' : 'no';
+    flyCardOff(dir);
+  } else {
+    // Snap back
+    cardEl.style.transition = 'transform 300ms ease';
+    cardEl.style.transform = 'translateX(0) rotate(0deg)';
+    var sYes = cardEl.querySelector('.stamp-yes');
+    var sNo = cardEl.querySelector('.stamp-no');
+    sYes.style.opacity = 0;
+    sNo.style.opacity = 0;
+
+    // Reset background card
+    var bgCard1 = document.querySelector('.swipe-card.card-bg-1');
+    if (bgCard1) {
+      bgCard1.style.transition = 'transform 300ms ease';
+      bgCard1.style.transform = 'scale(0.975) translateY(4px)';
+    }
+  }
+}
+
+function flyCardOff(direction) {
+  isAnimating = true;
+  var xOff = direction === 'yes' ? 500 : -500;
+  var rot = direction === 'yes' ? 15 : -15;
+
+  cardEl.style.transition = 'transform 400ms ease-out';
+  cardEl.style.transform = 'translateX(' + xOff + 'px) rotate(' + rot + 'deg)';
+
+  // Flash stamp
+  var sYes = cardEl.querySelector('.stamp-yes');
+  var sNo = cardEl.querySelector('.stamp-no');
+  if (direction === 'yes') {
+    sYes.style.opacity = 0.95;
+    sNo.style.opacity = 0;
+  } else {
+    sNo.style.opacity = 0.95;
+    sYes.style.opacity = 0;
+  }
+
+  // Record
+  swipeHistory.push({ index: currentIndex, direction: direction });
+  if (direction === 'yes') {
+    yesCount++;
+    interestedProperties.push(swipeQueue[currentIndex]);
+  } else {
+    noCount++;
+  }
+
+  setTimeout(function() {
+    currentIndex++;
+    isAnimating = false;
+    if (currentIndex >= swipeQueue.length) {
+      document.getElementById('complete-yes').textContent = yesCount;
+      document.getElementById('complete-no').textContent = noCount;
+      if (skippedCount > 0) {
+        document.getElementById('complete-skip').textContent = skippedCount;
+        document.getElementById('complete-skip-wrap').style.display = '';
+      }
+      navigateTo('swipe-complete');
+    } else {
+      renderCards();
+    }
+  }, 400);
+}
+
+function buttonSwipe(dir) {
+  if (isAnimating || currentIndex >= swipeQueue.length) return;
+  flyCardOff(dir);
+}
+
+function undoSwipe() {
+  if (isAnimating || swipeHistory.length === 0) return;
+  isAnimating = true;
+
+  var last = swipeHistory.pop();
+  if (last.direction === 'yes') {
+    yesCount--;
+    interestedProperties = interestedProperties.filter(function(p) { return p.id !== swipeQueue[last.index].id; });
+  } else {
+    noCount--;
+  }
+
+  currentIndex = last.index;
+  renderCards();
+
+  // Animate card back from off-screen
+  var xOff = last.direction === 'yes' ? 500 : -500;
+  var rot = last.direction === 'yes' ? 15 : -15;
+  cardEl.style.transition = 'none';
+  cardEl.style.transform = 'translateX(' + xOff + 'px) rotate(' + rot + 'deg)';
+
+  // Force reflow then animate in
+  void cardEl.offsetWidth;
+  cardEl.style.transition = 'transform 400ms ease-out';
+  cardEl.style.transform = 'translateX(0) rotate(0deg)';
+
+  setTimeout(function() { isAnimating = false; }, 420);
+}
+
+/* =================================================================
+   DETAIL SHEET (Tinder-style pull-up)
+   ================================================================= */
+function openDetailSheet(propId) {
+  var prop = null;
+  for (var i = 0; i < properties.length; i++) {
+    if (properties[i].id === propId) { prop = properties[i]; break; }
+  }
+  if (!prop) return;
+
+  // Populate
+  document.getElementById('ds-name').textContent = prop.name;
+  document.getElementById('ds-station').textContent = prop.station + ' 徒歩' + prop.walk;
+  document.getElementById('ds-area').textContent = prop.area;
+  document.getElementById('ds-floor').textContent = prop.floor;
+  document.getElementById('ds-rent').textContent = prop.rent;
+
+  // Tsubo rent
+  var rentNum = parseFloat(prop.rent);
+  var areaNum = parseFloat(prop.area);
+  document.getElementById('ds-tsubo-rent').textContent =
+    (!isNaN(rentNum) && !isNaN(areaNum) && areaNum > 0) ? (rentNum / areaNum).toFixed(1) + '万円/坪' : '---';
+
+  // Hero image + overlay
+  var hero = document.getElementById('ds-hero');
+  var photo = prop.photos[0];
+  var overlayHTML = '<div class="ds-hero-overlay">' +
+    '<div class="ds-hero-name">' + prop.name + '</div>' +
+    '<div class="ds-hero-station"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg><span>' + prop.station + ' 徒歩' + prop.walk + '</span></div>' +
+    '</div>';
+  if (photo.type === 'img') {
+    hero.innerHTML = '<img src="' + photo.src + '" alt="">' + overlayHTML;
+    hero.style.background = '';
+  } else {
+    hero.innerHTML = '<div style="width:100%;height:100%;background:' + photo.src + ';"></div>' + overlayHTML;
+  }
+
+  // Render business types
+  var bizCard = document.getElementById('ds-biz-card');
+  var infoIcon = '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" style="margin-left:6px;opacity:0.4;"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5"/><path d="M8 7v4M8 5v.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>';
+  var bizHTML = '<div class="ds-card-title">出店可能業態' + infoIcon + '</div>';
+  var bizTypes = prop.bizTypes || {};
+
+  for (var c = 0; c < bizCategories.length; c++) {
+    var cat = bizCategories[c];
+    bizHTML += '<div class="ds-biz-category"><div class="ds-biz-cat-title">' + cat.cat + '</div><div class="ds-biz-list">';
+    for (var b = 0; b < cat.items.length; b++) {
+      var item = cat.items[b];
+      var status = bizTypes[item] || 'unknown';
+      var statusClass = 'ds-biz-item ds-biz-' + status;
+      var prefix = '';
+      if (status === 'ok') { prefix = '〇 '; }
+      else if (status === 'unknown') { prefix = '？ '; }
+      bizHTML += '<span class="' + statusClass + '">' + prefix + item + '</span>';
+    }
+    bizHTML += '</div></div>';
+  }
+  bizCard.innerHTML = bizHTML;
+
+  // Scroll to top
+  document.getElementById('detail-sheet-scroll').scrollTop = 0;
+
+  // Open with animation
+  var overlay = document.getElementById('detail-sheet-overlay');
+  overlay.style.display = 'flex';
+  // Force reflow
+  void overlay.offsetWidth;
+  overlay.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeDetailSheet() {
+  var overlay = document.getElementById('detail-sheet-overlay');
+  overlay.classList.remove('open');
+  setTimeout(function() {
+    overlay.style.display = 'none';
+    document.body.style.overflow = '';
+  }, 400);
+}
+
+function showDetail() {
+  if (currentIndex >= swipeQueue.length) return;
+  openDetailSheet(swipeQueue[currentIndex].id);
+}
+
+function openPropertyDoc(propId) {
+  var prop = null;
+  for (var i = 0; i < properties.length; i++) {
+    if (properties[i].id === propId) { prop = properties[i]; break; }
+  }
+  if (!prop) return;
+  showToast('物件概要書を表示します');
+  // In production, this would open a PDF or dedicated viewer
+}
+
+function openPropertyDocFromSwipe() {
+  if (currentIndex >= swipeQueue.length) return;
+  openPropertyDoc(swipeQueue[currentIndex].id);
+}
+
+function populateDetail(prop) {
+  document.getElementById('detail-title').textContent = prop.name;
+  document.getElementById('detail-station-text').textContent = prop.station + ' 徒歩' + prop.walk;
+  document.getElementById('detail-area').textContent = prop.area;
+  document.getElementById('detail-floor').textContent = prop.floor;
+  document.getElementById('detail-rent').textContent = prop.rent;
+
+  // Tsubo rent calculation
+  var rentNum = parseFloat(prop.rent);
+  var areaNum = parseFloat(prop.area);
+  if (!isNaN(rentNum) && !isNaN(areaNum) && areaNum > 0) {
+    document.getElementById('detail-tsubo-rent').textContent = (rentNum / areaNum).toFixed(1) + '万円/坪';
+  } else {
+    document.getElementById('detail-tsubo-rent').textContent = '---';
+  }
+
+  // Hero image (use photos array)
+  var hero = document.getElementById('detail-hero');
+  var photo0 = prop.photos && prop.photos[0];
+  if (photo0 && photo0.type === 'img') {
+    hero.style.backgroundImage = 'url(' + photo0.src + ')';
+    hero.style.backgroundSize = 'cover';
+    hero.style.backgroundPosition = 'center';
+  } else if (photo0 && photo0.type === 'grad') {
+    hero.style.backgroundImage = 'none';
+    hero.style.background = photo0.src;
+  } else {
+    hero.style.backgroundImage = 'none';
+  }
+
+  // Render business types (same as detail sheet)
+  var bizCard = document.getElementById('detail-biz-card');
+  var infoIcon = '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" style="margin-left:6px;opacity:0.4;"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5"/><path d="M8 7v4M8 5v.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>';
+  var bizHTML = '<div class="ds-card-title">出店可能業態' + infoIcon + '</div>';
+  var bizTypes = prop.bizTypes || {};
+
+  for (var c = 0; c < bizCategories.length; c++) {
+    var cat = bizCategories[c];
+    bizHTML += '<div class="ds-biz-category"><div class="ds-biz-cat-title">' + cat.cat + '</div><div class="ds-biz-list">';
+    for (var b = 0; b < cat.items.length; b++) {
+      var item = cat.items[b];
+      var status = bizTypes[item] || 'unknown';
+      var statusClass = 'ds-biz-item ds-biz-' + status;
+      var prefix = '';
+      if (status === 'ok') { prefix = '〇 '; }
+      else if (status === 'unknown') { prefix = '？ '; }
+      bizHTML += '<span class="' + statusClass + '">' + prefix + item + '</span>';
+    }
+    bizHTML += '</div></div>';
+  }
+  bizCard.innerHTML = bizHTML;
+
+  // Scroll to top
+  var scroll = document.getElementById('detail-scroll');
+  if (scroll) scroll.scrollTop = 0;
+}
+
+function goBackFromDetail() {
+  navigateTo(detailReturnPage);
+}
+
+function openDetailFromList(id) {
+  var prop = null;
+  for (var i = 0; i < properties.length; i++) {
+    if (properties[i].id === id) { prop = properties[i]; break; }
+  }
+  if (!prop) return;
+  detailReturnPage = 'interested';
+  populateDetail(prop);
+  navigateTo('property-detail');
+}
+
+/* =================================================================
+   INTERESTED LIST (with checkboxes)
+   ================================================================= */
+var selectedForViewing = {};
+var checkSvgWhite = '<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6L5 9L10 3" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+// Demo date data for interested list (pre-set fallback)
+var demoInterestedData = [
+  { propId: 1, date: 'today', requested: false },
+  { propId: 2, date: 'today', requested: false },
+  { propId: 3, date: 'today', requested: false },
+  { propId: 6, date: 'today', requested: false },
+  { propId: 7, date: 'today', requested: false },
+  { propId: 4, date: 'yesterday', requested: true },
+  { propId: 5, date: 'yesterday', requested: false }
+];
+
+function getDateLabel(dateStr) {
+  if (dateStr === 'today') return '今日';
+  if (dateStr === 'yesterday') return '昨日';
+  var parts = dateStr.split('-');
+  return parseInt(parts[1]) + '/' + parseInt(parts[2]);
+}
+
+function renderInterestedList() {
+  var list = document.getElementById('interested-list');
+  var countEl = document.getElementById('interested-count');
+  selectedForViewing = {};
+
+  // Fixed demo data (always show same list regardless of swiping)
+  var items = [];
+  for (var i = 0; i < demoInterestedData.length; i++) {
+    var d = demoInterestedData[i];
+    var prop = null;
+    for (var j = 0; j < properties.length; j++) {
+      if (properties[j].id === d.propId) { prop = properties[j]; break; }
+    }
+    if (prop) items.push({ prop: prop, date: d.date, requested: d.requested });
+  }
+
+  countEl.textContent = items.length;
+
+  // Group by date
+  var groups = [];
+  var groupMap = {};
+  for (var i = 0; i < items.length; i++) {
+    var key = items[i].date;
+    if (!groupMap[key]) {
+      groupMap[key] = { date: key, label: getDateLabel(key), items: [] };
+      groups.push(groupMap[key]);
+    }
+    groupMap[key].items.push({ prop: items[i].prop, requested: items[i].requested });
+  }
+
+  // Render
+  var html = '';
+  for (var g = 0; g < groups.length; g++) {
+    var grp = groups[g];
+    html += '<div class="list-date-header">' + grp.label + '<span class="list-date-count">' + grp.items.length + '件</span></div>';
+    for (var i = 0; i < grp.items.length; i++) {
+      var p = grp.items[i].prop;
+      var requested = grp.items[i].requested;
+      var badgeHTML = requested ? '<span class="badge-requested">内見リク</span>' : '';
+      html +=
+        '<div class="list-item" data-id="' + p.id + '">' +
+          '<div class="list-check" onclick="event.stopPropagation();toggleListSelect(this.parentElement,' + p.id + ')">' + checkSvgWhite + '</div>' +
+          '<div class="list-info" onclick="openDetailFromList(' + p.id + ')">' +
+            '<div class="list-info-line1">' +
+              '<span class="list-info-name">' + p.name + '</span>' +
+              '<span class="condition-badge">' + p.condition + '</span>' +
+              badgeHTML +
+            '</div>' +
+            '<div class="list-info-line2">' +
+              '<span class="list-spec-item"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>' + p.station + ' 徒歩' + p.walk + '</span>' +
+              '<span class="list-spec-item">' + p.floor + '</span>' +
+            '</div>' +
+            '<div class="list-info-line3">' +
+              '<span class="list-spec-item list-spec-area">' + p.area + '</span>' +
+              '<span class="list-spec-item list-spec-rent">' + p.rent + '</span>' +
+            '</div>' +
+          '</div>' +
+          '<button class="list-item-detail-btn" onclick="event.stopPropagation();openDetailFromList(' + p.id + ')">' +
+            '<svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M7.5 5L12.5 10L7.5 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
+          '</button>' +
+        '</div>';
+    }
+  }
+  list.innerHTML = html;
+  updateSelectionBar();
+}
+
+function toggleListSelect(el, id) {
+  el.classList.toggle('selected');
+  if (el.classList.contains('selected')) {
+    selectedForViewing[id] = true;
+  } else {
+    delete selectedForViewing[id];
+  }
+  updateSelectionBar();
+}
+
+function updateSelectionBar() {
+  var count = Object.keys(selectedForViewing).length;
+  document.getElementById('select-count-text').textContent = count + '件選択';
+  var btn = document.getElementById('btn-request-viewing');
+  btn.disabled = count === 0;
+  btn.textContent = count > 0 ? count + '件の内見をリクエスト' : '内見をリクエスト';
+}
+
+/* =================================================================
+   DETAIL SHEET "気になる" BUTTON
+   ================================================================= */
+function detailSheetLike() {
+  if (currentIndex >= swipeQueue.length) { closeDetailSheet(); return; }
+  closeDetailSheet();
+  setTimeout(function() { buttonSwipe('yes'); }, 450);
+  setTimeout(function() { showToast('気になるに追加しました'); }, 500);
+}
+
+/* =================================================================
+   VIEWING REQUEST SHEET
+   ================================================================= */
+var vrSelectedDates = {};
+var vrDateData = [];
+
+function generateDates() {
+  vrDateData = [];
+  var dow = ['日','月','火','水','木','金','土'];
+  var today = new Date();
+  for (var i = 1; i <= 14; i++) {
+    var d = new Date(today);
+    d.setDate(today.getDate() + i);
+    vrDateData.push({
+      date: d,
+      day: d.getDate(),
+      month: d.getMonth() + 1,
+      dow: dow[d.getDay()],
+      dayOfWeek: d.getDay(),
+      key: (d.getMonth()+1) + '/' + d.getDate()
+    });
+  }
+}
+
+function openViewingRequest() {
+  var ids = Object.keys(selectedForViewing);
+  if (ids.length === 0) return;
+
+  generateDates();
+  vrSelectedDates = {};
+
+  // Render selected properties
+  var propsEl = document.getElementById('vr-props');
+  var html = '';
+  for (var i = 0; i < ids.length; i++) {
+    var prop = null;
+    for (var j = 0; j < properties.length; j++) {
+      if (properties[j].id === parseInt(ids[i])) { prop = properties[j]; break; }
+    }
+    if (!prop) continue;
+    html += '<div class="vr-prop-item">' +
+      '<div class="vr-prop-thumb"></div>' +
+      '<div class="vr-prop-name">' + prop.name + '</div>' +
+      '<div class="vr-prop-rent">' + prop.rent + '</div>' +
+    '</div>';
+  }
+  propsEl.innerHTML = html;
+
+  // Render date chips
+  var dateScroll = document.getElementById('vr-date-scroll');
+  html = '';
+  for (var i = 0; i < vrDateData.length; i++) {
+    var d = vrDateData[i];
+    var dayClass = d.dayOfWeek === 0 ? ' sun' : d.dayOfWeek === 6 ? ' sat' : '';
+    html += '<div class="vr-date-chip' + dayClass + '" data-key="' + d.key + '" onclick="toggleVrDate(this,\'' + d.key + '\')">' +
+      '<span class="vr-date-dow">' + d.dow + '</span>' +
+      '<span class="vr-date-day">' + d.day + '</span>' +
+    '</div>';
+  }
+  dateScroll.innerHTML = html;
+
+  // Clear slots
+  document.getElementById('vr-slots').innerHTML = '';
+  updateVrSubmitBtn();
+
+  // Open
+  var overlay = document.getElementById('vr-sheet-overlay');
+  overlay.style.display = 'flex';
+  void overlay.offsetWidth;
+  overlay.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeViewingRequest() {
+  var overlay = document.getElementById('vr-sheet-overlay');
+  overlay.classList.remove('open');
+  setTimeout(function() {
+    overlay.style.display = 'none';
+    document.body.style.overflow = '';
+  }, 400);
+}
+
+function toggleVrDate(el, key) {
+  el.classList.toggle('selected');
+  if (el.classList.contains('selected')) {
+    vrSelectedDates[key] = ['09-12時'];
+  } else {
+    delete vrSelectedDates[key];
+  }
+  renderVrSlots();
+}
+
+function renderVrSlots() {
+  var slotsEl = document.getElementById('vr-slots');
+  var keys = Object.keys(vrSelectedDates);
+  if (keys.length === 0) {
+    slotsEl.innerHTML = '';
+    updateVrSubmitBtn();
+    return;
+  }
+
+  // Sort by date
+  keys.sort(function(a, b) {
+    var pa = a.split('/'); var pb = b.split('/');
+    return (parseInt(pa[0])*100 + parseInt(pa[1])) - (parseInt(pb[0])*100 + parseInt(pb[1]));
+  });
+
+  var html = '<div class="vr-section-label">時間帯を選択</div>';
+  var times = ['09-12時', '12-15時', '15-18時', '終日'];
+  for (var i = 0; i < keys.length; i++) {
+    var key = keys[i];
+    var selected = vrSelectedDates[key];
+    html += '<div class="vr-slot-card">' +
+      '<div class="vr-slot-date">' + key + '</div>' +
+      '<div class="vr-slot-times">';
+    for (var t = 0; t < times.length; t++) {
+      var isSelected = selected.indexOf(times[t]) !== -1;
+      html += '<div class="vr-time-chip' + (isSelected ? ' selected' : '') + '" onclick="toggleVrTime(\'' + key + '\',\'' + times[t] + '\',this)">' + times[t] + '</div>';
+    }
+    html += '</div>' +
+      '<button class="vr-slot-remove" onclick="removeVrDate(\'' + key + '\')">' +
+        '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' +
+      '</button>' +
+    '</div>';
+  }
+  slotsEl.innerHTML = html;
+  updateVrSubmitBtn();
+}
+
+function toggleVrTime(key, time, el) {
+  var arr = vrSelectedDates[key] || [];
+  if (time === '終日') {
+    vrSelectedDates[key] = ['終日'];
+  } else {
+    arr = arr.filter(function(t) { return t !== '終日'; });
+    var idx = arr.indexOf(time);
+    if (idx !== -1) { arr.splice(idx, 1); } else { arr.push(time); }
+    if (arr.length === 0) arr = [time];
+    vrSelectedDates[key] = arr;
+  }
+  renderVrSlots();
+}
+
+function removeVrDate(key) {
+  delete vrSelectedDates[key];
+  // Unselect chip
+  var chips = document.querySelectorAll('.vr-date-chip');
+  for (var i = 0; i < chips.length; i++) {
+    if (chips[i].getAttribute('data-key') === key) {
+      chips[i].classList.remove('selected');
+    }
+  }
+  renderVrSlots();
+}
+
+function updateVrSubmitBtn() {
+  var count = Object.keys(selectedForViewing).length;
+  var dates = Object.keys(vrSelectedDates).length;
+  var btn = document.getElementById('vr-submit-btn');
+  btn.textContent = count + '件の内見をリクエスト';
+}
+
+function submitViewingRequest() {
+  var dates = Object.keys(vrSelectedDates);
+  if (dates.length === 0) {
+    showToast('日程を選択してください');
+    return;
+  }
+  closeViewingRequest();
+  setTimeout(function() {
+    showToast('内見リクエストを送信しました');
+    setTimeout(function() { navigateTo('viewings'); }, 1500);
+  }, 500);
+}
+
+/* =================================================================
+   SKIPPED LIST (直近30日)
+   ================================================================= */
+function renderSkippedList() {
+  var container = document.getElementById('skipped-list');
+  if (!container) return;
+  var html = '';
+  for (var i = 0; i < skippedHistory.length; i++) {
+    var p = skippedHistory[i];
+    html +=
+      '<div class="skipped-item">' +
+        '<div class="skipped-item-info">' +
+          '<div class="skipped-item-name">' + p.name + '</div>' +
+          '<div class="skipped-item-meta">🚉 ' + p.station + ' 徒歩' + p.walk + '　' + p.area + '　💰 ' + p.rent + '</div>' +
+        '</div>' +
+        '<div class="skipped-item-age">' + p.daysAgo + '日前</div>' +
+      '</div>';
+  }
+  if (skippedHistory.length === 0) {
+    html = '<div style="text-align:center;padding:40px 0;color:var(--text-tertiary);font-size:var(--text-sm);">スキップ済み物件はありません</div>';
+  }
+  container.innerHTML = html;
+}
+
+/* =================================================================
+   RESET
+   ================================================================= */
+function resetSwipe() {
+  currentIndex = 0;
+  swipeHistory = [];
+  yesCount = 0;
+  noCount = 0;
+  interestedProperties = [];
+  selectedForViewing = {};
+}
+
+/* =================================================================
+   VIEWING DETAIL (日程調整)
+   ================================================================= */
+var vdSelectedDate = -1;
+var vdCurrentPropId = null;
+
+function openViewingDetail(propId) {
+  vdCurrentPropId = propId;
+  vdSelectedDate = -1;
+
+  // Find property
+  var prop = null;
+  for (var i = 0; i < properties.length; i++) {
+    if (properties[i].id === propId) { prop = properties[i]; break; }
+  }
+  if (!prop) return;
+
+  // Populate
+  document.getElementById('vd-title').textContent = prop.name;
+  document.getElementById('vd-station').textContent = prop.station + ' 徒歩' + prop.walk;
+  document.getElementById('vd-area').textContent = prop.area;
+  document.getElementById('vd-floor').textContent = prop.floor;
+  document.getElementById('vd-rent').textContent = prop.rent;
+
+  // Hero image (use photos array)
+  var hero = document.getElementById('vd-hero');
+  var vdPhoto = prop.photos && prop.photos[0];
+  if (vdPhoto && vdPhoto.type === 'img') {
+    hero.style.backgroundImage = 'url(' + vdPhoto.src + ')';
+    hero.style.backgroundSize = 'cover';
+    hero.style.backgroundPosition = 'center';
+  } else if (vdPhoto && vdPhoto.type === 'grad') {
+    hero.style.backgroundImage = 'none';
+    hero.style.background = vdPhoto.src;
+  } else {
+    hero.style.backgroundImage = 'none';
+  }
+
+  // Reset date selection
+  var options = document.querySelectorAll('.vd-date-option');
+  for (var i = 0; i < options.length; i++) {
+    options[i].classList.remove('selected');
+  }
+  document.getElementById('vd-btn-confirm').disabled = true;
+  document.getElementById('vd-status-badge').textContent = '回答待ち';
+  document.getElementById('vd-status-badge').className = 'vd-status-badge waiting';
+
+  navigateTo('viewing-detail');
+}
+
+function selectVdDate(el, idx) {
+  vdSelectedDate = idx;
+  var options = document.querySelectorAll('.vd-date-option');
+  for (var i = 0; i < options.length; i++) {
+    options[i].classList.toggle('selected', i === idx);
+  }
+  document.getElementById('vd-btn-confirm').disabled = false;
+}
+
+function confirmViewingDate() {
+  if (vdSelectedDate < 0) return;
+  var options = document.querySelectorAll('.vd-date-option');
+  var selected = options[vdSelectedDate];
+  var dateText = selected.querySelector('.vd-date-day').textContent;
+  var timeText = selected.querySelector('.vd-date-time').textContent;
+
+  // Update badge
+  document.getElementById('vd-status-badge').textContent = '確定';
+  document.getElementById('vd-status-badge').className = 'vd-status-badge confirmed';
+
+  showToast(dateText + ' ' + timeText + ' で確定しました');
+
+  // After delay, go to viewings
+  setTimeout(function() {
+    navigateTo('viewings');
+  }, 1500);
+}
+
+function rejectViewingDates() {
+  showToast('運営に別日程をリクエストしました');
+  setTimeout(function() {
+    navigateTo('viewings');
+  }, 1500);
+}
+
+function openDetailFromViewing() {
+  if (vdCurrentPropId === null) return;
+  var prop = null;
+  for (var i = 0; i < properties.length; i++) {
+    if (properties[i].id === vdCurrentPropId) { prop = properties[i]; break; }
+  }
+  if (!prop) return;
+  detailReturnPage = 'viewing-detail';
+  populateDetail(prop);
+  navigateTo('property-detail');
+}
+
+/* =================================================================
+   CRITERIA DETAIL CHART
+   ================================================================= */
+function renderCriteriaChart() {
+  var chart = document.getElementById('cd-chart');
+  var axis = document.getElementById('cd-chart-axis');
+  if (!chart) return;
+
+  // Demo data: 30 days
+  var data = [
+    0,1,0,2,1,0,1, 0,2,1,0,1,1,0, 1,2,1,1,0,1,0, 2,1,1,2,0,1,1, 0,1
+  ];
+  var yesData = [
+    0,1,0,1,0,0,0, 0,1,0,0,1,0,0, 1,1,0,0,0,1,0, 1,0,1,1,0,0,0, 0,1
+  ];
+
+  var maxVal = 0;
+  for (var i = 0; i < data.length; i++) {
+    if (data[i] > maxVal) maxVal = data[i];
+  }
+  if (maxVal === 0) maxVal = 1;
+
+  var html = '';
+  for (var i = 0; i < data.length; i++) {
+    var totalH = data[i] > 0 ? Math.round((data[i] / maxVal) * 60) + 4 : 2;
+    var yesH = yesData[i] > 0 ? Math.round((yesData[i] / maxVal) * 60) + 4 : 0;
+    html +=
+      '<div class="cd-chart-bar-wrap">' +
+        '<div class="cd-chart-bar cd-chart-bar-total" style="height:' + totalH + 'px;position:relative;">' +
+          (yesH > 0 ? '<div class="cd-chart-bar-yes" style="height:' + yesH + 'px;"></div>' : '') +
+        '</div>' +
+      '</div>';
+  }
+  chart.innerHTML = html;
+
+  // Axis labels
+  if (axis) {
+    axis.innerHTML = '30日前<span>20日前</span><span>10日前</span><span>今日</span>';
+  }
+}
+
+/* =================================================================
+   STATION PICKER
+   ================================================================= */
+var spStations = [
+  { name:'渋谷駅', pref:'東京都', lines:4, tags:['terminal','commercial'] },
+  { name:'新宿駅', pref:'東京都', lines:6, tags:['terminal','commercial'] },
+  { name:'池袋駅', pref:'東京都', lines:5, tags:['terminal','commercial','student'] },
+  { name:'東京駅', pref:'東京都', lines:5, tags:['terminal','office'] },
+  { name:'品川駅', pref:'東京都', lines:4, tags:['terminal','office'] },
+  { name:'六本木駅', pref:'東京都', lines:2, tags:['commercial'] },
+  { name:'銀座駅', pref:'東京都', lines:3, tags:['commercial'] },
+  { name:'東銀座駅', pref:'東京都', lines:2, tags:['commercial'] },
+  { name:'銀座一丁目駅', pref:'東京都', lines:1, tags:['commercial'] },
+  { name:'戸越銀座駅', pref:'東京都', lines:1, tags:['residential'] },
+  { name:'表参道駅', pref:'東京都', lines:3, tags:['commercial'] },
+  { name:'恵比寿駅', pref:'東京都', lines:2, tags:['commercial','residential'] },
+  { name:'自由が丘駅', pref:'東京都', lines:2, tags:['residential','commercial'] },
+  { name:'中目黒駅', pref:'東京都', lines:2, tags:['residential'] },
+  { name:'下北沢駅', pref:'東京都', lines:2, tags:['student','residential'] },
+  { name:'吉祥寺駅', pref:'東京都', lines:2, tags:['student','residential'] },
+  { name:'高田馬場駅', pref:'東京都', lines:3, tags:['student'] },
+  { name:'御茶ノ水駅', pref:'東京都', lines:3, tags:['student','office'] },
+  { name:'大手町駅', pref:'東京都', lines:5, tags:['office'] },
+  { name:'丸の内駅', pref:'東京都', lines:1, tags:['office'] },
+  { name:'日本橋駅', pref:'東京都', lines:3, tags:['office','commercial'] },
+  { name:'五反田駅', pref:'東京都', lines:3, tags:['office','residential'] },
+  { name:'目黒駅', pref:'東京都', lines:3, tags:['residential'] },
+  { name:'三軒茶屋駅', pref:'東京都', lines:2, tags:['residential'] },
+  { name:'武蔵小杉駅', pref:'神奈川県', lines:4, tags:['residential'] },
+  { name:'横浜駅', pref:'神奈川県', lines:6, tags:['terminal','commercial'] }
+];
+
+var spSelected = {};
+var spActiveTag = null;
+
+function spSearch() {
+  var input = document.getElementById('sp-search-input');
+  var query = input.value.trim();
+  var wrap = document.getElementById('sp-search-wrap');
+  var results = document.getElementById('sp-results');
+  var clearBtn = document.getElementById('sp-search-clear');
+
+  clearBtn.classList.toggle('visible', query.length > 0);
+
+  if (query.length === 0 && !spActiveTag) {
+    results.classList.remove('visible');
+    wrap.classList.remove('has-results');
+    return;
+  }
+
+  var filtered = spStations.filter(function(s) {
+    var matchQuery = query.length === 0 || s.name.indexOf(query) !== -1;
+    var matchTag = !spActiveTag || s.tags.indexOf(spActiveTag) !== -1;
+    return matchQuery && matchTag;
+  });
+
+  if (filtered.length === 0) {
+    results.innerHTML = '<div style="padding:16px;text-align:center;font-size:var(--text-sm);color:var(--text-tertiary);">該当する駅がありません</div>';
+  } else {
+    var html = '';
+    for (var i = 0; i < filtered.length; i++) {
+      var s = filtered[i];
+      var isChecked = !!spSelected[s.name];
+      var checkSvg = isChecked ? '<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6L5 9L10 3" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>' : '';
+      html += '<div class="sp-result-item' + (isChecked ? ' checked' : '') + '" onclick="spToggleStation(\'' + s.name + '\')">' +
+        '<div><span class="sp-result-name">' + s.name + '</span><span class="sp-result-meta">（' + s.pref + '・' + s.lines + '路線）</span></div>' +
+        '<div class="sp-result-check">' + checkSvg + '</div>' +
+      '</div>';
+    }
+    results.innerHTML = html;
+  }
+  results.classList.add('visible');
+  wrap.classList.add('has-results');
+}
+
+function spClearSearch() {
+  var input = document.getElementById('sp-search-input');
+  input.value = '';
+  input.focus();
+  spSearch();
+}
+
+function spToggleTag(el, tag) {
+  var isActive = el.classList.contains('active');
+
+  if (isActive) {
+    // タグが既にアクティブ → そのカテゴリの駅を全て選択解除
+    el.classList.remove('active');
+    for (var i = 0; i < spStations.length; i++) {
+      var station = spStations[i];
+      if (station.tags && station.tags.indexOf(tag) !== -1) {
+        delete spSelected[station.name];
+      }
+    }
+  } else {
+    // タグがアクティブでない → そのカテゴリの駅を全て選択
+    el.classList.add('active');
+    for (var i = 0; i < spStations.length; i++) {
+      var station = spStations[i];
+      if (station.tags && station.tags.indexOf(tag) !== -1) {
+        spSelected[station.name] = station;
+      }
+    }
+  }
+
+  spSearch();
+  spRenderSelected();
+}
+
+function spToggleStation(name) {
+  if (spSelected[name]) {
+    delete spSelected[name];
+  } else {
+    var s = null;
+    for (var i = 0; i < spStations.length; i++) {
+      if (spStations[i].name === name) { s = spStations[i]; break; }
+    }
+    if (s) spSelected[name] = s;
+  }
+  spSearch(); // refresh results checkmarks
+  spRenderSelected();
+}
+
+function spRemoveStation(name) {
+  delete spSelected[name];
+  spSearch();
+  spRenderSelected();
+}
+
+function spClearAll() {
+  spSelected = {};
+  spSearch();
+  spRenderSelected();
+}
+
+function spRenderSelected() {
+  var list = document.getElementById('sp-selected-list');
+  var counter = document.getElementById('sp-counter');
+  var counterText = document.getElementById('sp-counter-text');
+  var keys = Object.keys(spSelected);
+
+  if (keys.length === 0) {
+    counter.style.display = 'none';
+    list.innerHTML = '';
+    return;
+  }
+
+  counter.style.display = 'flex';
+  counterText.textContent = '選択中: ' + keys.length + '駅';
+
+  var html = '';
+  for (var i = 0; i < keys.length; i++) {
+    var s = spSelected[keys[i]];
+    html += '<div class="sp-selected-item">' +
+      '<span class="sp-selected-expand"><svg width="12" height="12" viewBox="0 0 20 20" fill="none"><path d="M7.5 5L12.5 10L7.5 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>' +
+      '<span class="sp-selected-name">' + s.name + '</span>' +
+      '<span class="sp-selected-meta">（' + s.pref + '・' + s.lines + '路線）</span>' +
+      '<button class="sp-selected-remove" onclick="spRemoveStation(\'' + s.name + '\')">' +
+        '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' +
+      '</button>' +
+    '</div>';
+  }
+  list.innerHTML = html;
+}
+
+// Close results when clicking outside
+document.addEventListener('click', function(e) {
+  var container = document.getElementById('sp-container');
+  if (container && !container.contains(e.target)) {
+    var results = document.getElementById('sp-results');
+    var wrap = document.getElementById('sp-search-wrap');
+    if (results) results.classList.remove('visible');
+    if (wrap) wrap.classList.remove('has-results');
+  }
+});
+
+/* =================================================================
+   DYNAMIC GREETING
+   ================================================================= */
+function updateGreeting() {
+  var h = new Date().getHours();
+  var greeting = h < 12 ? 'おはようございます' : h < 17 ? 'こんにちは' : 'お疲れさまです';
+  var el = document.querySelector('.dash-greeting');
+  if (el) el.innerHTML = greeting + '、<strong>田中</strong>様';
+}
+
+/* =================================================================
+   INIT
+   ================================================================= */
+(function() {
+  updateGreeting();
+  navigateTo('welcome');
+})();
+</script>
+</body>
+</html>
