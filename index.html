@@ -685,16 +685,32 @@ body {
   z-index: 2;
   pointer-events: none;
 }
+.card-info-line1 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
 .card-info-name {
   font-size: var(--text-lg);
   font-weight: 700;
-  margin-bottom: 6px;
   line-height: 1.3;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
+  white-space: nowrap;
   overflow: hidden;
+  text-overflow: ellipsis;
   color: #fff;
+  flex: 1;
+  min-width: 0;
+}
+.card-badge-viewing {
+  flex-shrink: 0;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+  background: rgba(59, 130, 246, 0.9);
+  color: #fff;
+  letter-spacing: 0.3px;
 }
 .card-info-line2 {
   font-size: var(--text-base);
@@ -4398,9 +4414,12 @@ function buildCard(prop, cls) {
       '<div class="stamp stamp-no">興味なし</div>' +
     '</div>' +
     '<div class="card-info">' +
-      '<div class="card-info-name">' + prop.name + '</div>' +
+      '<div class="card-info-line1">' +
+        '<div class="card-info-name">' + prop.name + '</div>' +
+        '<span class="card-badge-viewing">内見リク</span>' +
+      '</div>' +
       '<div class="card-info-line2">🚉 ' + prop.station + '  徒歩' + prop.walk + '</div>' +
-      '<div class="card-info-line3">' + prop.area + '  ' + prop.floor + '  💰 ' + prop.rent + '</div>' +
+      '<div class="card-info-line3">' + prop.floor + '  ' + prop.area + '  💰 ' + prop.rent + '  ' + prop.condition + '</div>' +
     '</div>' +
     '';
 
