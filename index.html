@@ -685,32 +685,15 @@ body {
   z-index: 2;
   pointer-events: none;
 }
-.card-info-line1 {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 6px;
-}
 .card-info-name {
   font-size: var(--text-lg);
   font-weight: 700;
+  margin-bottom: 6px;
   line-height: 1.3;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   color: #fff;
-  flex: 1;
-  min-width: 0;
-}
-.card-badge-viewing {
-  flex-shrink: 0;
-  font-size: 10px;
-  font-weight: 700;
-  padding: 3px 8px;
-  border-radius: var(--radius-full);
-  background: rgba(59, 130, 246, 0.9);
-  color: #fff;
-  letter-spacing: 0.3px;
 }
 .card-info-line2 {
   font-size: var(--text-base);
@@ -1349,11 +1332,6 @@ body {
   align-items: center;
   gap: 4px;
   white-space: nowrap;
-}
-.list-spec-area {
-}
-.list-spec-rent {
-  font-weight: 700;
 }
 .list-info-date { font-size: var(--text-xs); color: var(--text-tertiary); }
 .list-chevron { color: var(--text-tertiary); flex-shrink: 0; }
@@ -4374,6 +4352,14 @@ function renderCards() {
   attachSwipe(main);
 }
 
+function calcTsuboRent(prop) {
+  var rentNum = parseFloat(prop.rent.replace(/[^0-9.]/g, ''));
+  var areaNum = parseFloat(prop.area.replace(/[^0-9.]/g, ''));
+  if (!areaNum) return '';
+  var tsubo = Math.round(rentNum / areaNum * 10) / 10;
+  return tsubo + '万/坪';
+}
+
 function buildCard(prop, cls) {
   var card = document.createElement('div');
   card.className = 'swipe-card ' + cls;
@@ -4411,12 +4397,9 @@ function buildCard(prop, cls) {
       '<div class="stamp stamp-no">興味なし</div>' +
     '</div>' +
     '<div class="card-info">' +
-      '<div class="card-info-line1">' +
-        '<div class="card-info-name">' + prop.name + '</div>' +
-        '<span class="card-badge-viewing">内見リク</span>' +
-      '</div>' +
-      '<div class="card-info-line2">🚉 ' + prop.station + '  徒歩' + prop.walk + '  ' + prop.condition + '</div>' +
-      '<div class="card-info-line3">' + prop.floor + '  ' + prop.area + '  ' + prop.rent + '</div>' +
+      '<div class="card-info-name">' + prop.name + '</div>' +
+      '<div class="card-info-line2">🚉 ' + prop.station + '  徒歩' + prop.walk + '  ' + prop.floor + '  ' + prop.condition + '</div>' +
+      '<div class="card-info-line3">' + prop.rent + '  ' + prop.area + '  ' + calcTsuboRent(prop) + '</div>' +
     '</div>' +
     '';
 
@@ -4929,16 +4912,17 @@ function renderInterestedList() {
           '<div class="list-info" onclick="openDetailFromList(' + p.id + ')">' +
             '<div class="list-info-line1">' +
               '<span class="list-info-name">' + p.name + '</span>' +
-              '<span class="condition-badge">' + p.condition + '</span>' +
               badgeHTML +
             '</div>' +
             '<div class="list-info-line2">' +
               '<span class="list-spec-item"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>' + p.station + ' 徒歩' + p.walk + '</span>' +
               '<span class="list-spec-item">' + p.floor + '</span>' +
+              '<span class="list-spec-item">' + p.condition + '</span>' +
             '</div>' +
             '<div class="list-info-line3">' +
-              '<span class="list-spec-item list-spec-area">' + p.area + '</span>' +
-              '<span class="list-spec-item list-spec-rent">' + p.rent + '</span>' +
+              '<span class="list-spec-item">' + p.rent + '</span>' +
+              '<span class="list-spec-item">' + p.area + '</span>' +
+              '<span class="list-spec-item">' + calcTsuboRent(p) + '</span>' +
             '</div>' +
           '</div>' +
           '<button class="list-item-detail-btn" onclick="event.stopPropagation();openDetailFromList(' + p.id + ')">' +
