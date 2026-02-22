@@ -916,6 +916,10 @@ body {
   color: #1a1a1a;
   font-weight: 600;
 }
+.ds-table .ds-td-value.unconfirmed {
+  color: #bbb;
+  font-weight: 400;
+}
 
 /* Business type hierarchy */
 .ds-biz-category {
@@ -3526,18 +3530,8 @@ body {
         </table>
       </div>
 
-      <!-- 設備情報 table -->
-      <div class="ds-card">
-        <div class="ds-card-title">設備情報</div>
-        <table class="ds-table">
-          <tr><td class="ds-td-label">状態</td><td class="ds-td-value">スケルトン</td></tr>
-          <tr><td class="ds-td-label">給排水</td><td class="ds-td-value">あり</td></tr>
-          <tr><td class="ds-td-label">トイレ</td><td class="ds-td-value">専用</td></tr>
-          <tr><td class="ds-td-label">エアコン</td><td class="ds-td-value">個別空調</td></tr>
-          <tr><td class="ds-td-label">ダクト</td><td class="ds-td-value">設置可</td></tr>
-          <tr><td class="ds-td-label">天井高</td><td class="ds-td-value">3.2m</td></tr>
-        </table>
-      </div>
+      <!-- 設備情報 table (dynamic) -->
+      <div class="ds-card" id="detail-equip-card"></div>
 
       <!-- 出店可能業態 -->
       <div class="ds-card" id="detail-biz-card">
@@ -3976,18 +3970,8 @@ body {
         </table>
       </div>
 
-      <!-- Equipment info table -->
-      <div class="ds-card">
-        <div class="ds-card-title">設備情報</div>
-        <table class="ds-table">
-          <tr><td class="ds-td-label">状態</td><td class="ds-td-value">スケルトン</td></tr>
-          <tr><td class="ds-td-label">給排水</td><td class="ds-td-value">あり</td></tr>
-          <tr><td class="ds-td-label">トイレ</td><td class="ds-td-value">専用</td></tr>
-          <tr><td class="ds-td-label">エアコン</td><td class="ds-td-value">個別空調</td></tr>
-          <tr><td class="ds-td-label">ダクト</td><td class="ds-td-value">設置可</td></tr>
-          <tr><td class="ds-td-label">天井高</td><td class="ds-td-value">3.2m</td></tr>
-        </table>
-      </div>
+      <!-- Equipment info table (dynamic) -->
+      <div class="ds-card" id="ds-equip-card"></div>
 
       <!-- Business types (hierarchical) -->
       <div class="ds-card" id="ds-biz-card">
@@ -4100,32 +4084,39 @@ var properties = [
   { id:1, name:'渋谷区神南一丁目 商業ビル用地', station:'渋谷駅', walk:'5分', area:'45.2坪', floor:'1F', rent:'350万円', condition:'スケルトン', daysAgo:0, status:'pending',
     photos:[ph('img','building1/map1.PNG','地図'), ph('img','building1/IMG_1740.PNG','外観'), ph('img','building1/IMG_1741.PNG','内装'), ph('img','building1/IMG_1742.PNG','間取り')],
     bizOk:['レストラン','カフェ','バー・居酒屋','テイクアウト','アパレル','雑貨','美容院','エステ・ネイル'],
-    bizTypes:{'ヘビー飲食':'ok','軽飲食':'ok','バー・クラブ':'ok','スナック':'ng','美容室・理容室':'ok','ネイルサロン':'ok','まつげサロン':'ok','エステサロン':'ok','リラクゼーション':'unknown','フィットネス':'ng','ゴルフスクール':'ng','道場・スポーツ教室':'ng','カラオケ':'ng','漫画カフェ':'ng','ゲームセンター':'ng','パチンコ':'ng','物販':'ok','医療施設':'ng','学習塾・教室':'ok','サービス業':'ok'} },
+    bizTypes:{'ヘビー飲食':'ok','軽飲食':'ok','バー・クラブ':'ok','スナック':'ng','美容室・理容室':'ok','ネイルサロン':'ok','まつげサロン':'ok','エステサロン':'ok','リラクゼーション':'unknown','フィットネス':'ng','ゴルフスクール':'ng','道場・スポーツ教室':'ng','カラオケ':'ng','漫画カフェ':'ng','ゲームセンター':'ng','パチンコ':'ng','物販':'ok','医療施設':'ng','学習塾・教室':'ok','サービス業':'ok'},
+    equip:{状態:'スケルトン',給排水:'あり',トイレ:'専用',エアコン:'個別空調',ダクト:'設置可',天井高:'3.2m'} },
   { id:2, name:'港区六本木三丁目 オフィスビル', station:'六本木駅', walk:'3分', area:'62.8坪', floor:'2F', rent:'520万円', condition:'事務所仕様', daysAgo:0, status:'pending',
     photos:[ph('img','building2/map2.PNG','地図'), ph('img','building2/IMG_1744.PNG','外観'), ph('img','building2/IMG_1745.PNG','内装'), ph('img','building2/IMG_1746.PNG','間取り')],
     bizOk:['レストラン','カフェ','バー・居酒屋','アパレル','雑貨','クリニック','オフィス','コワーキング','ショールーム'],
-    bizTypes:{'ヘビー飲食':'ng','軽飲食':'ok','バー・クラブ':'ng','スナック':'ng','美容室・理容室':'ok','ネイルサロン':'ok','まつげサロン':'ok','エステサロン':'ok','リラクゼーション':'ok','フィットネス':'ok','ゴルフスクール':'ng','道場・スポーツ教室':'ng','カラオケ':'ng','漫画カフェ':'ng','ゲームセンター':'ng','パチンコ':'ng','物販':'ok','医療施設':'ok','学習塾・教室':'ok','サービス業':'ok'} },
+    bizTypes:{'ヘビー飲食':'ng','軽飲食':'ok','バー・クラブ':'ng','スナック':'ng','美容室・理容室':'ok','ネイルサロン':'ok','まつげサロン':'ok','エステサロン':'ok','リラクゼーション':'ok','フィットネス':'ok','ゴルフスクール':'ng','道場・スポーツ教室':'ng','カラオケ':'ng','漫画カフェ':'ng','ゲームセンター':'ng','パチンコ':'ng','物販':'ok','医療施設':'ok','学習塾・教室':'ok','サービス業':'ok'},
+    equip:{状態:'事務所仕様',給排水:'未確認',トイレ:'共有',エアコン:'未確認',ダクト:'なし（引込不可）',天井高:'2.7m'} },
   { id:3, name:'新宿区歌舞伎町二丁目 店舗用地', station:'新宿駅', walk:'8分', area:'28.5坪', floor:'1F', rent:'180万円', condition:'居抜き', daysAgo:0, status:'pending',
     photos:[ph('img','building3/map3.PNG','地図'), ph('img','building3/IMG_1748.PNG','外観'), ph('img','building3/IMG_1749.PNG','内装'), ph('img','building3/IMG_1750.PNG','間取り')],
     bizOk:['レストラン','カフェ','バー・居酒屋','ファストフード','テイクアウト','美容院'],
-    bizTypes:{'ヘビー飲食':'ok','軽飲食':'ok','バー・クラブ':'ok','スナック':'ok','美容室・理容室':'ok','ネイルサロン':'ok','まつげサロン':'ok','エステサロン':'ng','リラクゼーション':'ng','フィットネス':'ng','ゴルフスクール':'ng','道場・スポーツ教室':'ng','カラオケ':'ok','漫画カフェ':'ng','ゲームセンター':'ng','パチンコ':'ng','物販':'ok','医療施設':'ng','学習塾・教室':'ng','サービス業':'ok'} },
+    bizTypes:{'ヘビー飲食':'ok','軽飲食':'ok','バー・クラブ':'ok','スナック':'ok','美容室・理容室':'ok','ネイルサロン':'ok','まつげサロン':'ok','エステサロン':'ng','リラクゼーション':'ng','フィットネス':'ng','ゴルフスクール':'ng','道場・スポーツ教室':'ng','カラオケ':'ok','漫画カフェ':'ng','ゲームセンター':'ng','パチンコ':'ng','物販':'ok','医療施設':'ng','学習塾・教室':'ng','サービス業':'ok'},
+    equip:{状態:'居抜き',給排水:'あり',トイレ:'専用',エアコン:'あり（残置）',ダクト:'あり',天井高:'未確認'} },
   { id:4, name:'中央区銀座六丁目 商業施設', station:'銀座駅', walk:'2分', area:'85.0坪', floor:'B1F', rent:'680万円', condition:'内装リク', daysAgo:0, status:'pending',
     photos:[ph('img','building1/map1.PNG','地図'), ph('img','building1/IMG_1740.PNG','外観'), ph('img','building1/IMG_1741.PNG','内装'), ph('img','building1/IMG_1742.PNG','間取り')],
     bizOk:['レストラン','カフェ','アパレル','雑貨','コンビニ','ドラッグストア','エステ・ネイル','クリニック','ショールーム'],
-    bizTypes:{'ヘビー飲食':'ng','軽飲食':'ok','バー・クラブ':'ok','スナック':'ng','美容室・理容室':'ok','ネイルサロン':'ok','まつげサロン':'ok','エステサロン':'ok','リラクゼーション':'ok','フィットネス':'ok','ゴルフスクール':'ok','道場・スポーツ教室':'ng','カラオケ':'ng','漫画カフェ':'ng','ゲームセンター':'ng','パチンコ':'ng','物販':'ok','医療施設':'ok','学習塾・教室':'ok','サービス業':'ok'} },
+    bizTypes:{'ヘビー飲食':'ng','軽飲食':'ok','バー・クラブ':'ok','スナック':'ng','美容室・理容室':'ok','ネイルサロン':'ok','まつげサロン':'ok','エステサロン':'ok','リラクゼーション':'ok','フィットネス':'ok','ゴルフスクール':'ok','道場・スポーツ教室':'ng','カラオケ':'ng','漫画カフェ':'ng','ゲームセンター':'ng','パチンコ':'ng','物販':'ok','医療施設':'ok','学習塾・教室':'ok','サービス業':'ok'},
+    equip:{状態:'スケルトン',給排水:'未確認',トイレ:'未確認',エアコン:'なし',ダクト:'未確認',天井高:'3.5m'} },
   // 1日前配信 (3件)
   { id:5, name:'千代田区丸の内一丁目 複合ビル', station:'東京駅', walk:'1分', area:'120.5坪', floor:'5F', rent:'980万円', condition:'事務所仕様', daysAgo:1, status:'pending',
     photos:[ph('img','building2/map2.PNG','地図'), ph('img','building2/IMG_1744.PNG','外観'), ph('img','building2/IMG_1745.PNG','内装'), ph('img','building2/IMG_1746.PNG','間取り')],
     bizOk:['レストラン','カフェ','アパレル','オフィス','コワーキング','ショールーム','フィットネス'],
-    bizTypes:{'ヘビー飲食':'ng','軽飲食':'ok','バー・クラブ':'ng','スナック':'ng','美容室・理容室':'unknown','ネイルサロン':'unknown','まつげサロン':'unknown','エステサロン':'unknown','リラクゼーション':'ng','フィットネス':'ok','ゴルフスクール':'ok','道場・スポーツ教室':'ok','カラオケ':'ng','漫画カフェ':'ng','ゲームセンター':'ng','パチンコ':'ng','物販':'ok','医療施設':'ok','学習塾・教室':'ok','サービス業':'ok'} },
+    bizTypes:{'ヘビー飲食':'ng','軽飲食':'ok','バー・クラブ':'ng','スナック':'ng','美容室・理容室':'unknown','ネイルサロン':'unknown','まつげサロン':'unknown','エステサロン':'unknown','リラクゼーション':'ng','フィットネス':'ok','ゴルフスクール':'ok','道場・スポーツ教室':'ok','カラオケ':'ng','漫画カフェ':'ng','ゲームセンター':'ng','パチンコ':'ng','物販':'ok','医療施設':'ok','学習塾・教室':'ok','サービス業':'ok'},
+    equip:{状態:'事務所仕様',給排水:'あり',トイレ:'専用',エアコン:'個別空調',ダクト:'なし（引込可）',天井高:'2.8m'} },
   { id:6, name:'目黒区自由が丘二丁目 店舗', station:'自由が丘駅', walk:'4分', area:'32.0坪', floor:'1F', rent:'150万円', condition:'居抜き', daysAgo:1, status:'pending',
     photos:[ph('img','building3/map3.PNG','地図'), ph('img','building3/IMG_1748.PNG','外観'), ph('img','building3/IMG_1749.PNG','内装'), ph('img','building3/IMG_1750.PNG','間取り')],
     bizOk:['レストラン','カフェ','テイクアウト','アパレル','雑貨','美容院','エステ・ネイル'],
-    bizTypes:{'ヘビー飲食':'ng','軽飲食':'ok','バー・クラブ':'ng','スナック':'ng','美容室・理容室':'ok','ネイルサロン':'ok','まつげサロン':'ok','エステサロン':'ok','リラクゼーション':'ok','フィットネス':'ng','ゴルフスクール':'ng','道場・スポーツ教室':'ng','カラオケ':'ng','漫画カフェ':'ng','ゲームセンター':'ng','パチンコ':'ng','物販':'ok','医療施設':'ok','学習塾・教室':'ok','サービス業':'ok'} },
+    bizTypes:{'ヘビー飲食':'ng','軽飲食':'ok','バー・クラブ':'ng','スナック':'ng','美容室・理容室':'ok','ネイルサロン':'ok','まつげサロン':'ok','エステサロン':'ok','リラクゼーション':'ok','フィットネス':'ng','ゴルフスクール':'ng','道場・スポーツ教室':'ng','カラオケ':'ng','漫画カフェ':'ng','ゲームセンター':'ng','パチンコ':'ng','物販':'ok','医療施設':'ok','学習塾・教室':'ok','サービス業':'ok'},
+    equip:{状態:'居抜き',給排水:'あり',トイレ:'あり（専有）',エアコン:'未確認',ダクト:'未確認',天井高:'未確認'} },
   { id:7, name:'渋谷区恵比寿一丁目 飲食ビル', station:'恵比寿駅', walk:'2分', area:'25.3坪', floor:'3F', rent:'55万円', condition:'スケルトン', daysAgo:1, status:'pending',
     photos:[ph('img','building1/map1.PNG','地図'), ph('img','building1/IMG_1740.PNG','外観'), ph('img','building1/IMG_1741.PNG','内装'), ph('img','building1/IMG_1742.PNG','間取り')],
     bizOk:['レストラン','カフェ','バー・居酒屋','ファストフード','テイクアウト'],
-    bizTypes:{'ヘビー飲食':'ok','軽飲食':'ok','バー・クラブ':'ok','スナック':'ok','美容室・理容室':'ng','ネイルサロン':'ng','まつげサロン':'ng','エステサロン':'ng','リラクゼーション':'ng','フィットネス':'ng','ゴルフスクール':'ng','道場・スポーツ教室':'ng','カラオケ':'ng','漫画カフェ':'ng','ゲームセンター':'ng','パチンコ':'ng','物販':'ng','医療施設':'ng','学習塾・教室':'ng','サービス業':'ng'} }
+    bizTypes:{'ヘビー飲食':'ok','軽飲食':'ok','バー・クラブ':'ok','スナック':'ok','美容室・理容室':'ng','ネイルサロン':'ng','まつげサロン':'ng','エステサロン':'ng','リラクゼーション':'ng','フィットネス':'ng','ゴルフスクール':'ng','道場・スポーツ教室':'ng','カラオケ':'ng','漫画カフェ':'ng','ゲームセンター':'ng','パチンコ':'ng','物販':'ng','医療施設':'ng','学習塾・教室':'ng','サービス業':'ng'},
+    equip:{状態:'スケルトン',給排水:'あり',トイレ:'未確認',エアコン:'なし',ダクト:'設置可',天井高:'2.9m'} }
 ];
 // Sort by age descending (古い順=期限が近い順にスワイプ)
 properties.sort(function(a, b) { return b.daysAgo - a.daysAgo; });
@@ -4766,6 +4757,9 @@ function openDetailSheet(propId) {
   }
   bizCard.innerHTML = bizHTML;
 
+  // Render equipment table
+  renderEquipTable('ds-equip-card', prop.equip);
+
   // Scroll to top
   document.getElementById('detail-sheet-scroll').scrollTop = 0;
 
@@ -4805,6 +4799,19 @@ function openPropertyDoc(propId) {
 function openPropertyDocFromSwipe() {
   if (currentIndex >= swipeQueue.length) return;
   openPropertyDoc(swipeQueue[currentIndex].id);
+}
+
+var equipKeys = ['状態','給排水','トイレ','エアコン','ダクト','天井高'];
+function renderEquipTable(containerId, equip) {
+  var html = '<div class="ds-card-title">設備情報</div><table class="ds-table">';
+  for (var i = 0; i < equipKeys.length; i++) {
+    var k = equipKeys[i];
+    var v = (equip && equip[k]) || '未確認';
+    var cls = v === '未確認' ? ' unconfirmed' : '';
+    html += '<tr><td class="ds-td-label">' + k + '</td><td class="ds-td-value' + cls + '">' + v + '</td></tr>';
+  }
+  html += '</table>';
+  document.getElementById(containerId).innerHTML = html;
 }
 
 function populateDetail(prop) {
@@ -4849,6 +4856,9 @@ function populateDetail(prop) {
   counter.textContent = '1 / ' + photos.length;
   track.style.transform = 'translateX(0)';
   initDetailGallery(photos.length);
+
+  // Render equipment table
+  renderEquipTable('detail-equip-card', prop.equip);
 
   // Render business types (same as detail sheet)
   var bizCard = document.getElementById('detail-biz-card');
